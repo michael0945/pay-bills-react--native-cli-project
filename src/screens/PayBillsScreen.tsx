@@ -194,6 +194,8 @@ import {
   TouchableOpacity,
   Animated,
   Modal,
+  Dimensions,
+  SafeAreaView,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -211,9 +213,12 @@ import { Picker } from "@react-native-picker/picker";
 import { fetchDerashBillers } from "../../redux/slices/service/derashSlice";
 import { setBillerID } from "../../redux/aggrigatorSlice";
 
-type PayBillsScreenNavigationProp = StackNavigationProp<
-  RootStackParamList,
-  "PayBills">;
+const screenWidth = Dimensions.get("window").width;
+const numColumns = 3;
+const buttonSpacing = 10;
+const buttonWidth = (screenWidth - buttonSpacing * (numColumns + 1)) / numColumns;
+
+type PayBillsScreenNavigationProp = StackNavigationProp<RootStackParamList, "PayBills">;
 
 const PayBillsScreen: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -265,25 +270,24 @@ const PayBillsScreen: React.FC = () => {
       setSelectedVendor("UNICASH");
     }
   };
+
   useFocusEffect(
     useCallback(() => {
       return () => {
         dispatch(clearBilllookupState());
-
       };
     }, [dispatch])
   );
 
   return (
-
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.instruction}>
         Please select the vendor or service provider for the bill you would like to pay.
       </Text>
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="c" />
+          <ActivityIndicator size="large" color="green" />
           <Text style={styles.loadingText}>Loading vendors for paybills...</Text>
         </View>
       ) : error ? (
@@ -293,42 +297,40 @@ const PayBillsScreen: React.FC = () => {
           <Animated.View style={[styles.grid, { opacity: fadeAnim }]}>
             <FlatList
               data={vendorCodes}
-              numColumns={3}
+              numColumns={numColumns}
               keyExtractor={(item, index) => index.toString()}
               contentContainerStyle={styles.grid}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.vendorButton,
-                    selectedVendor === item.toUpperCase() && styles.selectedVendor,
-                  ]}
-                  onPress={() => handleVendorClick(item)}
-                >
-                  <Text
+              renderItem={({ item }) => {
+                const isSelected = selectedVendor === item.toUpperCase();
+                return (
+                  <TouchableOpacity
                     style={[
-                      styles.vendorText,
-                      selectedVendor === item.toUpperCase() && styles.selectedVendorText,
+                      styles.vendorButton,
+                      { width: buttonWidth },
+                      isSelected && styles.selectedVendor,
                     ]}
+                    onPress={() => handleVendorClick(item)}
                   >
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              )}
+                    <Text style={[styles.vendorText, isSelected && styles.selectedVendorText]}>
+                      {item}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
             />
           </Animated.View>
 
           {selectedVendor && selectedVendor !== "DERASH" && selectedVendor !== "UNICASH" && (
             <Ethswitch selectedVendor={selectedVendor} />
           )}
-          {selectedVendor === "DERASH" && (
 
+          {selectedVendor === "DERASH" && (
             <ScrollView>
               {derashState.loading ? (
                 <Modal transparent animationType="fade">
                   <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                       <ActivityIndicator size="large" color="#2AB930" />
-
                     </View>
                   </View>
                 </Modal>
@@ -350,17 +352,16 @@ const PayBillsScreen: React.FC = () => {
                     />
                   ))}
                 </Picker>
-
               )}
 
               <BillAggrigator />
             </ScrollView>
           )}
+
           {selectedVendor === "UNICASH" && <Unicash />}
         </>
       )}
-    </View>
-
+    </SafeAreaView>
   );
 };
 
@@ -397,11 +398,9 @@ const styles = StyleSheet.create({
   vendorButton: {
     backgroundColor: "#e6e6e6",
     paddingVertical: 12,
-    paddingHorizontal: 15,
     margin: 5,
     borderRadius: 8,
     alignItems: "center",
-    width: "30%",
   },
   selectedVendor: {
     backgroundColor: "#2AB930",

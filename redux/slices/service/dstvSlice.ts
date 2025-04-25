@@ -13,6 +13,7 @@ interface DSTVState {
     shortMessage: string | null;
     status: "idle" | "loading" | "succeeded" | "failed";
     error: string | null;
+    longMessage: string | null;
 }
 
 const initialState: DSTVState = {
@@ -26,6 +27,7 @@ const initialState: DSTVState = {
     shortMessage: null,
     status: "idle",
     error: null,
+    longMessage: null,
 };
 
 interface DSTVResponse {
@@ -37,6 +39,8 @@ interface DSTVResponse {
     Line5: string;
     Line6: string;
     shortMessage: string;
+    longMessage: string;
+
 }
 
 export const fetchDSTVData = createAsyncThunk<DSTVResponse, string>(
@@ -58,6 +62,13 @@ export const fetchDSTVData = createAsyncThunk<DSTVResponse, string>(
         });
 
         console.log(" API Response:", response.data);
+        const responseData = response.data[0];
+        if (responseData.MSG_ShortMessage !== "Success") {
+            throw new Error(responseData.MSG_LongMessage || "Failed to fetch data");
+        }
+        if (!responseData.BODY_ServiceResponse) {
+            throw new Error("No service response found");
+        }
 
         const parsedBody = JSON.parse(response.data[0].BODY_ServiceResponse);
 
@@ -70,6 +81,7 @@ export const fetchDSTVData = createAsyncThunk<DSTVResponse, string>(
             Line5: parsedBody.Line5,
             Line6: parsedBody.Line6,
             shortMessage: response.data[0].MSG_ShortMessage,
+            longMessage: response.data[0].MSG_LongMessage,
         };
     }
 );
@@ -116,6 +128,8 @@ const dstvSlice = createSlice({
             .addCase(fetchDSTVData.rejected, (state, action) => {
                 state.status = "failed";
                 state.error = action.error.message || "Something went wrong";
+                state.longMessage = action.error.message || "Something went wrong";
+                state.amountDue = null;
             });
     },
 });

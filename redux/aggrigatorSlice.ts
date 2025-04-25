@@ -56,7 +56,7 @@ export const fetchBillDetails = createAsyncThunk(
             const response: AxiosResponse = await AmoleServices(requestBody);
             const responseData = response.data[0]
 
-            console.log("✅ API Response:", responseData);
+            console.log("API Response:", responseData);
 
             const serviceResponse = responseData.BODY_ServiceResponse;
             const longMessage = responseData.MSG_LongMessage;

@@ -1,7 +1,35 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, createAction } from "@reduxjs/toolkit";
 import configuration from "../config/configurations";
 import AmolePayment from "../services/AmolePayment";
 import { RootState } from "./store";
+interface PaymentState {
+    mobileNumber: string;
+    pin: string;
+    amount: string;
+    pinType: string;
+    additionalInfo2: string;
+    loading: boolean;
+    error: string | null;
+    shortMessage: string;
+    referenceNumber: string;
+    responseAmount: string;
+    status: "idle" | "loading" | "succeeded" | "failed";
+}
+
+const initialState: PaymentState = {
+    mobileNumber: "",
+    pin: "",
+    amount: "",
+    pinType: "",
+    additionalInfo2: "",
+    loading: false,
+    error: null,
+    shortMessage: "",
+    referenceNumber: "",
+    responseAmount: "",
+    status: "idle",
+};
+
 
 
 export const submitPayment = createAsyncThunk(
@@ -31,6 +59,7 @@ export const submitPayment = createAsyncThunk(
     }
 );
 
+
 const paymentSlice = createSlice({
     name: "payment",
     initialState: {
@@ -41,8 +70,11 @@ const paymentSlice = createSlice({
         additionalInfo2: "",
         loading: false,
         shortMessage: "",
+        longMessage: "",
+        error: null,
         referenceNumber: "",
         responseAmount: "",
+        status: "idle",
     },
     reducers: {
         setMobileNumber: (state, action) => {
@@ -67,12 +99,18 @@ const paymentSlice = createSlice({
             state.pinType = "";
             state.additionalInfo2 = "";
             state.shortMessage = "";
+            state.longMessage = "";
+            state.loading = false;
+            state.error = null;
             state.referenceNumber = "";
             state.responseAmount = "";
+
+
         },
     },
     extraReducers: (builder) => {
         builder
+
             .addCase(submitPayment.pending, (state) => {
                 state.loading = true;
                 state.shortMessage = "";
@@ -86,10 +124,13 @@ const paymentSlice = createSlice({
                 state.referenceNumber = firstItem.HDR_ReferenceNumber;
                 state.responseAmount = firstItem.BODY_Amount;
             })
-            .addCase(submitPayment.rejected, (state) => {
+            .addCase(submitPayment.rejected, (state, action) => {
+                state.status = "failed";
                 state.loading = false;
-                state.shortMessage = "Payment Failed";
-            });
+                state.error = action.payload as string | null;
+                state.longMessage = action.payload as string;
+            })
+
     },
 });
 

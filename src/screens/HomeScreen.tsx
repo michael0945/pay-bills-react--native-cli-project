@@ -1,10 +1,27 @@
 import React from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  PixelRatio,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../types/navigation";
+
+// Dimensions for responsive scaling
+const { width, height } = Dimensions.get("window");
+const scale = width / 375;
+
+function normalize(size: number) {
+  const newSize = size * scale;
+  return Math.round(PixelRatio.roundToNearestPixel(newSize));
+}
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, "Home">;
 
@@ -51,35 +68,55 @@ const HomeScreen = () => {
               }
             }}
           >
-            {/* <View style={[styles.iconContainer, { backgroundColor: item.color }]} /> */}
-            <FontAwesome5 name={item.icon} size={24} color={item.color} style={styles.icon} solid />
+            <FontAwesome5
+              name={item.icon}
+              size={normalize(22)}
+              color={item.color}
+              style={styles.icon}
+              solid
+            />
             <Text style={styles.menuText}>{item.title}</Text>
-            <Ionicons name="chevron-forward" size={20} color="#ccc" />
+            <Ionicons name="chevron-forward" size={normalize(18)} color="#ccc" />
           </TouchableOpacity>
         )}
+        contentContainerStyle={{ paddingBottom: 20 }}
       />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
+    paddingHorizontal: normalize(10),
+    paddingTop: normalize(10),
+  },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    padding: 25,
-    marginVertical: 4,
-    borderRadius: 5,
+    paddingVertical: normalize(16),
+    paddingHorizontal: normalize(20),
+    marginVertical: normalize(4),
+    borderRadius: normalize(8),
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
     elevation: 2,
-    // marginHorizontal: 3,
   },
-  iconContainer: { width: 5, height: "100%", borderRadius: 5, marginRight: 10 },
-  icon: { marginHorizontal: 10 },
-  menuText: { flex: 1, fontSize: 16, fontWeight: "500" },
+  icon: {
+    marginRight: normalize(12),
+  },
+  menuText: {
+    flex: 1,
+    fontSize: normalize(15),
+    fontWeight: "500",
+    color: "#333",
+  },
 });
 
 export default HomeScreen;
+export { normalize }; // Export the normalize function for use in other files
+export type { HomeScreenNavigationProp }; // Export the navigation prop type for use in other files

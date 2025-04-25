@@ -7,7 +7,11 @@ import {
     ActivityIndicator,
     StyleSheet,
     Modal,
-    ScrollView
+    ScrollView,
+    KeyboardAvoidingView,
+    Platform,
+    Dimensions,
+    SafeAreaView
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../redux/store";
@@ -19,6 +23,8 @@ import {
 } from "../../redux/paymentSlice";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import OTP from "./OTP";
+
+const { width, height } = Dimensions.get("window");
 
 const AirtimeScreen = () => {
     const [selectedTopup, setSelectedTopup] = useState<"PIN" | "PINLESS">("PIN");
@@ -33,7 +39,9 @@ const AirtimeScreen = () => {
         loading,
         shortMessage,
         referenceNumber,
-        responseAmount
+        responseAmount,
+        longMessage,
+        error,
     } = useSelector((state: RootState) => state.payment);
 
     const handlePayment = () => {
@@ -45,177 +53,186 @@ const AirtimeScreen = () => {
         setCustomAmount("");
         setSelectedAmount(25);
         setSelectedTopup("PIN");
+
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <View style={styles.container}>
-                {/* Mobile Number Input */}
-                <View style={styles.section}>
-                    <Text style={styles.label}>Send Minutes To</Text>
-                    <TextInput
-                        style={styles.input}
-                        keyboardType="phone-pad"
-                        placeholder="Mobile Number"
-                        onChangeText={(text) => dispatch(setMobileNumber(text))}
-                    />
-                </View>
-
-                {/* Topup Type */}
-                <View style={styles.section}>
-                    <Text style={styles.label}>Topup Type</Text>
-                    <View style={styles.topupContainer}>
-                        {["PIN", "PINLESS"].map((type) => (
-                            <TouchableOpacity
-                                key={type}
-                                style={[
-                                    styles.topupOption,
-                                    selectedTopup === type && styles.selectedTopup
-                                ]}
-                                onPress={() => {
-                                    setSelectedTopup(type as "PIN" | "PINLESS");
-                                    dispatch(setPinType(type === "PIN" ? "P" : "B"));
-                                }}
-                            >
-                                <View
-                                    style={[
-                                        styles.radioCircle,
-                                        selectedTopup === type && styles.selectedRadioCircle
-                                    ]}
-                                />
-                                <Text style={styles.topupText}>{type}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                </View>
-
-                {/* Amount Selection */}
-                {selectedTopup === "PIN" ? (
-                    <View style={styles.section}>
-                        <Text style={styles.topupDescription}>
-                            PIN: Topup prepaid airtime with PIN to be sent to customer mobile phone in text message.
-                        </Text>
-                        <Text style={styles.label}>Card Amount</Text>
-                        <View style={styles.amountContainer}>
-                            {amounts.map((amt) => (
-                                <TouchableOpacity
-                                    key={amt}
-                                    style={[
-                                        styles.amountButton,
-                                        selectedAmount === amt && styles.selectedAmount
-                                    ]}
-                                    onPress={() => {
-                                        setSelectedAmount(amt);
-                                        dispatch(setAmount(amt.toString()));
-                                    }}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.amountText,
-                                            selectedAmount === amt && styles.selectedAmountText
-                                        ]}
-                                    >
-                                        Br {amt}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#f8f9fa" }}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
+                style={{ flex: 1 }}
+            >
+                <ScrollView contentContainerStyle={styles.scrollContainer}>
+                    <View style={styles.container}>
+                        {/* Phone Number */}
+                        <View style={styles.section}>
+                            <Text style={styles.label}>Send Minutes To</Text>
+                            <TextInput
+                                style={styles.input}
+                                keyboardType="phone-pad"
+                                placeholder="Mobile Number"
+                                onChangeText={(text) => dispatch(setMobileNumber(text))}
+                            />
                         </View>
-                    </View>
-                ) : (
-                    <View style={styles.section}>
-                        <Text style={styles.label}>Amount (50 to 100)</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter custom amount"
-                            keyboardType="numeric"
-                            value={customAmount}
-                            onChangeText={(text) => {
-                                setCustomAmount(text);
-                                dispatch(setAmount(text));
-                            }}
-                        />
-                    </View>
-                )}
-                <OTP />
 
-                {/* Submit Button */}
-                <TouchableOpacity style={styles.submitButton} onPress={handlePayment}>
-                    <Text style={styles.submitText}>Submit</Text>
-                </TouchableOpacity>
-
-                {/* Modal */}
-                <Modal transparent={true} visible={modalVisible}>
-                    <View style={styles.modalOverlay}>
-
-                        {loading ? (
-                            <><View style={styles.modalContainer}>
-                                <ActivityIndicator size="large" color="blue" />
-                                <Text style={{ textAlign: "center", marginTop: 10 }}>
-                                    Processing Payment...
-                                </Text>
-                            </View>
-                            </>
-                        ) : shortMessage ? (
-                            <View style={styles.modalContainer1}>
-                                <View style={styles.successIconContainer}>
-                                    <Ionicons name="checkmark-circle" size={80} color="white" />
-                                </View>
-                                <Text style={styles.amountText1} >{responseAmount}</Text>
-                                <Text style={styles.successMessageText}>{shortMessage}</Text>
-                                <Text style={styles.refText}>Ref # {referenceNumber}</Text>
-
-
-                                <View style={styles.buttonRow}>
+                        {/* Topup Type */}
+                        <View style={styles.section}>
+                            <Text style={styles.label}>Topup Type</Text>
+                            <View style={styles.topupContainer}>
+                                {["PIN", "PINLESS"].map((type) => (
                                     <TouchableOpacity
-                                        style={styles.actionButton2}
+                                        key={type}
+                                        style={[
+                                            styles.topupOption,
+                                            selectedTopup === type && styles.selectedTopup
+                                        ]}
                                         onPress={() => {
-                                            resetForm();
-                                            setModalVisible(false);
+                                            setSelectedTopup(type as "PIN" | "PINLESS");
+                                            dispatch(setPinType(type === "PIN" ? "P" : "B"));
                                         }}
                                     >
-                                        <Ionicons name="arrow-forward" size={18} color="white" />
-                                        <Text style={styles.actionButtonText}>New Topup</Text>
+                                        <View
+                                            style={[
+                                                styles.radioCircle,
+                                                selectedTopup === type && styles.selectedRadioCircle
+                                            ]}
+                                        />
+                                        <Text style={styles.topupText}>{type}</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={styles.actionButton}
-                                        onPress={() => setModalVisible(false)}
-                                    >
-                                        <Ionicons name="home-outline" size={18} color="white" />
-                                        <Text style={styles.actionButtonText}>Home Screen</Text>
-                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+
+                        {/* Amount Selection */}
+                        {selectedTopup === "PIN" ? (
+                            <View style={styles.section}>
+                                <Text style={styles.topupDescription}>
+                                    PIN: Topup prepaid airtime with PIN to be sent to customer mobile phone in text message.
+                                </Text>
+                                <Text style={styles.label}>Card Amount</Text>
+                                <View style={styles.amountContainer}>
+                                    {amounts.map((amt) => (
+                                        <TouchableOpacity
+                                            key={amt}
+                                            style={[
+                                                styles.amountButton,
+                                                selectedAmount === amt && styles.selectedAmount
+                                            ]}
+                                            onPress={() => {
+                                                setSelectedAmount(amt);
+                                                dispatch(setAmount(amt.toString()));
+                                            }}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.amountText,
+                                                    selectedAmount === amt && styles.selectedAmountText
+                                                ]}
+                                            >
+                                                Br {amt}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
                                 </View>
-
-                                <TouchableOpacity
-                                    style={styles.printButton}
-                                    onPress={() => setModalVisible(false)}
-                                >
-                                    <Ionicons name="print-outline" size={18} color="black" />
-                                    <Text style={styles.actionButtonText1}>Print Receipt</Text>
-                                </TouchableOpacity>
-
                             </View>
                         ) : (
-                            <View style={{ alignItems: "center" }}>
-                                <Text>Payment Failed</Text>
-                                <TouchableOpacity
-                                    onPress={() => setModalVisible(false)}
-                                    style={styles.errorButton}
-                                >
-                                    <Text style={{ color: "white" }}>OK</Text>
-                                </TouchableOpacity>
+                            <View style={styles.section}>
+                                <Text style={styles.label}>Amount (50 to 100)</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Enter custom amount"
+                                    keyboardType="numeric"
+                                    value={customAmount}
+                                    onChangeText={(text) => {
+                                        setCustomAmount(text);
+                                        dispatch(setAmount(text));
+                                    }}
+                                />
                             </View>
                         )}
 
+                        <View style={{ padding: 15 }}>
+                            <OTP />
+                        </View>
+
+                        {/* Submit Button */}
+                        <TouchableOpacity style={styles.submitButton} onPress={handlePayment}>
+                            <Text style={styles.submitText}>Submit</Text>
+                        </TouchableOpacity>
+
+                        {/* Modal */}
+                        <Modal transparent={true} visible={modalVisible}>
+                            <View style={styles.modalOverlay}>
+                                {loading ? (
+                                    <View style={styles.modalContainer}>
+                                        <ActivityIndicator size="large" color="blue" />
+                                        <Text style={{ textAlign: "center", marginTop: 10 }}>
+                                            Processing Payment...
+                                        </Text>
+                                    </View>
+                                ) : shortMessage ? (
+                                    <View style={styles.modalContainer1}>
+                                        <View style={styles.successIconContainer}>
+                                            <Ionicons name="checkmark-circle" size={80} color="white" />
+                                        </View>
+                                        <Text style={styles.amountText1}>{responseAmount}</Text>
+                                        <Text style={styles.successMessageText}>{shortMessage}</Text>
+                                        <Text style={styles.refText}>Ref # {referenceNumber}</Text>
+
+                                        <View style={styles.buttonRow}>
+                                            <TouchableOpacity
+                                                style={styles.actionButton2}
+                                                onPress={() => {
+                                                    resetForm();
+                                                    setModalVisible(false);
+                                                }}
+                                            >
+                                                <Ionicons name="arrow-forward" size={18} color="white" />
+                                                <Text style={styles.actionButtonText} >New Topup</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={styles.actionButton}
+                                                onPress={() => setModalVisible(false)}
+                                            >
+                                                <Ionicons name="home-outline" size={18} color="white" />
+                                                <Text style={styles.actionButtonText}>Home Screen</Text>
+                                            </TouchableOpacity>
+                                        </View>
+
+                                        <TouchableOpacity
+                                            style={styles.printButton}
+                                            onPress={() => setModalVisible(false)}
+                                        >
+                                            <Ionicons name="print-outline" size={18} color="black" />
+                                            <Text style={styles.actionButtonText1}>Print Receipt</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                ) : (
+                                    <View style={{ alignItems: "center" }}>
+                                        <Text>{error}</Text>
+                                        <Text>{longMessage}</Text>
+                                        <TouchableOpacity
+                                            onPress={() => setModalVisible(false)}
+                                            style={styles.errorButton}
+                                        >
+                                            <Text style={{ color: "white" }}>OK</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </View>
+                        </Modal>
                     </View>
-                </Modal>
-            </View>
-        </ScrollView>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 };
 
+
+
 const styles = StyleSheet.create({
     scrollContainer: { flexGrow: 1 },
-    container: { flex: 1, backgroundColor: "#f8f9fa" },
+    container: { flex: 1, backgroundColor: "#f8f9fa", },
     section: { padding: 15 },
     label: { fontSize: 14, fontWeight: "bold", color: "#333", marginBottom: 5 },
     input: {
@@ -269,7 +286,14 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         alignItems: "center",
         marginVertical: 20,
-        marginHorizontal: 15
+        marginHorizontal: 15,
+        elevation: 3,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        minHeight: 50,
+
 
 
     },
@@ -316,7 +340,7 @@ const styles = StyleSheet.create({
     },
     modalContainer1: {
         width: "85%",
-        height: "27%",
+        height: "30%",
         padding: 20,
         backgroundColor: "#fff",
         borderRadius: 10,

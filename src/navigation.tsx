@@ -49,27 +49,24 @@
 
 // export default AppNavigator;
 import React from "react";
-import { createStackNavigator } from "@react-navigation/stack";
-import { NavigationContainer, RouteProp } from "@react-navigation/native";
-import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
-import HomeScreen from "./screens/HomeScreen";
-import PayBillsScreen from "./screens/PayBillsScreen";
-import DstvPaymentScreen from "./screens/DSTVPaymentScreen";
-import AirtimeScreen from "./screens/Airtime";
-import Ionicons from "react-native-vector-icons/Ionicons";
-
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   Image,
-  ViewStyle,
-  TextStyle,
-  ImageStyle,
+  Platform,
+  useWindowDimensions,
+  SafeAreaView,
 } from "react-native";
+import { createStackNavigator } from "@react-navigation/stack";
+import { NavigationContainer } from "@react-navigation/native";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import HomeScreen from "./screens/HomeScreen";
+import PayBillsScreen from "./screens/PayBillsScreen";
+import DstvPaymentScreen from "./screens/DSTVPaymentScreen";
+import AirtimeScreen from "./screens/Airtime";
 
-// Stack navigator type
 type RootStackParamList = {
   Home: undefined;
   PayBills: undefined;
@@ -79,63 +76,53 @@ type RootStackParamList = {
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-
 const getScreenDisplayInfo = (routeName: string) => {
   switch (routeName) {
     case "PayBills":
-      return { title: "PayBills", icon: "card-outline" };
+      return { title: "Pay Bills", icon: "card-outline" };
     case "DstvPayment":
-      return { title: "Dstv", icon: "tv-outline" };
+      return { title: "DSTV Payment", icon: "tv-outline" };
     case "AirtimeScreen":
-      return { title: "AirtimeScreen", icon: "call-outline" };
+      return { title: "Airtime", icon: "call-outline" };
     default:
       return { title: "MICHAELM", icon: "" };
   }
 };
 
-
-const CustomHeader: React.FC<{ navigation: any; routeName: string }> = ({
-  navigation,
-  routeName,
-}) => {
+const CustomHeader: React.FC<{ navigation: any; routeName: string }> = ({ navigation, routeName }) => {
+  const { width } = useWindowDimensions();
   const { title, icon } = getScreenDisplayInfo(routeName);
 
   return (
-    <View>
+    <SafeAreaView style={{ backgroundColor: "#015CB7" }}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.openDrawer?.()}>
           <Ionicons name="menu" size={28} color="#fff" style={styles.menuIcon} />
         </TouchableOpacity>
 
-        <Image source={require("../assets/p1.png.png")} style={styles.logo} />
+        <Image source={require("../assets/p1.png.png")} style={[styles.logo, { maxWidth: width * 0.25 }]} />
 
-        <View style={styles.userInfo}>
-          <Text style={styles.userGreeting}>Michaelm</Text>
-        </View>
+        <Text style={styles.userGreeting}>Michaelm</Text>
       </View>
 
-      <View style={styles.header1}>
+      <View style={styles.subHeader}>
         <View style={styles.headerTitleWithIcon}>
-          <Ionicons name={icon} size={25} color="#fff" style={{ marginRight: 6 }} />
+          <Ionicons name={icon} size={24} color="#fff" style={{ marginRight: 6 }} />
           <Text style={styles.userTitle}>{title}</Text>
         </View>
         <Text style={styles.balance}>1,057,424.25 Br</Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
-// Screens wrapped in Stack
 const StackNavigator = () => {
   return (
     <Stack.Navigator
       screenOptions={({ navigation, route }) => {
         const routeName = route.name;
         return {
-          headerStyle: { backgroundColor: "#015CB7" },
-          headerTintColor: "#fff",
-          headerTitleAlign: "center",
-          headerTitle: () => <CustomHeader navigation={navigation} routeName={routeName} />,
+          header: () => <CustomHeader navigation={navigation} routeName={routeName} />,
         };
       }}
     >
@@ -147,6 +134,51 @@ const StackNavigator = () => {
   );
 };
 
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === "android" ? 10 : 0,
+    paddingBottom: 8,
+    backgroundColor: "#015CB7",
+  },
+  menuIcon: {
+    padding: 4,
+  },
+  logo: {
+    height: 40,
+    resizeMode: "contain",
+  },
+  userGreeting: {
+    color: "#FFD700",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  subHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    backgroundColor: "#015CB7",
+  },
+  headerTitleWithIcon: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  userTitle: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  balance: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "500",
+  },
+});
 
 const AppNavigator: React.FC = () => {
   return (
@@ -156,80 +188,8 @@ const AppNavigator: React.FC = () => {
   );
 };
 
-
-interface Style {
-  header: ViewStyle;
-  menuIcon: ViewStyle;
-  logo: ImageStyle;
-  userInfo: ViewStyle;
-  userGreeting: TextStyle;
-  header1: ViewStyle;
-  headerTitleWithIcon: ViewStyle;
-  userTitle: TextStyle;
-  balance: TextStyle;
-}
-
-const styles = StyleSheet.create<Style>({
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    width: "100%",
-  },
-  menuIcon: {
-    padding: 4,
-  },
-  logo: {
-    width: 70,
-    height: 40,
-    resizeMode: "contain",
-    marginRight: 200,
-  },
-  userInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  userGreeting: {
-    color: "#FFD700",
-    fontSize: 14,
-    fontWeight: "600",
-    marginRight: 30,
-
-  },
-  header1: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginBottom: 21,
-    marginLeft: 10,
-    marginRight: -48,
-  },
-  headerTitleWithIcon: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  userTitle: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 17,
-
-
-  },
-  balance: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginRight: 20,
-
-
-  },
-});
-
 export default AppNavigator;
+
 
 
 // import React from "react";

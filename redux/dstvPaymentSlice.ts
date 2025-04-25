@@ -14,6 +14,8 @@ interface DSTVPaymentState {
     amount: string | null;
     loading: boolean;
     error: string | null;
+    longMessage: string | null;
+
 }
 
 const initialState: DSTVPaymentState = {
@@ -26,6 +28,7 @@ const initialState: DSTVPaymentState = {
     amount: null,
     loading: false,
     error: null,
+    longMessage: null,
 };
 
 export const fetchDSTVPayment = createAsyncThunk(
@@ -56,6 +59,7 @@ export const fetchDSTVPayment = createAsyncThunk(
             console.log("API Response:", response);
 
             return {
+                longMessage: response.MSG_LongMessage,
                 shortMessage: response.MSG_ShortMessage,
                 referenceNumber: response.HDR_ReferenceNumber,
                 amount: response.BODY_Amount,
@@ -99,6 +103,7 @@ const dstvPaymentSlice = createSlice({
             .addCase(fetchDSTVPayment.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+                state.longMessage = action.payload as string;
             });
     },
 });

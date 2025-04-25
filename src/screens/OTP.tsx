@@ -189,10 +189,12 @@ const OTP = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
         backgroundColor: "#fff",
         marginTop: 20,
-        marginBottom: 30,
+        marginBottom: 15,
+        paddingTop: 20,
+
+
     },
     label: {
         fontSize: 18,
@@ -216,6 +218,8 @@ const styles = StyleSheet.create({
     },
     mobileWalletContainer: {
         paddingVertical: 10,
+
+
     },
     inputContainer: {
         flexDirection: "row",
@@ -232,6 +236,10 @@ const styles = StyleSheet.create({
         padding: 10,
         fontSize: 16,
         color: "#666",
+        marginTop: 10,
+        marginBottom: 1,
+
+
     },
     otpSection: {
         flexDirection: "row",
@@ -241,25 +249,34 @@ const styles = StyleSheet.create({
     },
     otpButton: {
         backgroundColor: "#28a745",
-        paddingVertical: 12,
+        paddingVertical: 14,
         paddingHorizontal: 20,
-        borderRadius: 5,
+        borderRadius: 10,
         alignItems: "center",
+        justifyContent: "center",
         flex: 1,
         marginRight: 10,
+        elevation: 3,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        minHeight: 50,
     },
     otpText: {
         color: "#fff",
         fontSize: 16,
         fontWeight: "bold",
+        textAlign: "center",
     },
     otpInput: {
         flex: 1,
         borderWidth: 1,
         borderColor: "#ccc",
         padding: 12,
-        borderRadius: 5,
+        borderRadius: 8,
         textAlign: "center",
+        minHeight: 50,
     },
     disabled: {
         backgroundColor: "#A9A9A9",

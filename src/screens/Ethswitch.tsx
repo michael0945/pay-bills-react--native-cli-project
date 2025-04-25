@@ -7,13 +7,18 @@ import {
     StyleSheet,
     ActivityIndicator,
     Modal,
+    Dimensions,
+    SafeAreaView,
+    ScrollView,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchBillLookupData, clearBillLookup, clearBilllookupState } from "../../redux/billLookupSlice";
+import { fetchBillLookupData, clearBilllookupState } from "../../redux/billLookupSlice";
 import { RootState, AppDispatch } from "../../redux/store";
-
 import { useFocusEffect } from "@react-navigation/native";
+
+// Get device width
+const { width } = Dimensions.get("window");
 
 interface EthswitchProps {
     selectedVendor: string;
@@ -39,55 +44,50 @@ const Ethswitch: React.FC<EthswitchProps> = ({ selectedVendor }) => {
     }, [billLookup.loading]);
 
     const vendorTexts: Record<string, string> = {
-        WEBSPRIX:
-            "Sweet :) Please enter your Mobile Number or Client ID registered at WebSprix and we can go lookup your bill amount due.",
-        WEBIRR:
-            "Sweet :) To lookup your bill at WeBirr, we need your Bill ID or Bill Code. Please enter this value below and we will search for your bill and amount due.",
-        GUZOGO:
-            "Awesome :) To lookup airline reservation at Guzo Go, we need your PNR which was either emailed or texted to you. Please enter your PNR from the airline below and we will go lookup the payment amount.",
-        ETAIRFLY: "Enter PNR reservation.",
-        LIYUBUS: "Cool! Where are we going? Let's get you a bus ticket. Please enter...",
+        WEBSPRIX: "Sweet :) Please enter your Mobile Number or Client ID registered at WebSprix and we can lookup your bill amount due.",
+        WEBIRR: "Sweet :) To lookup your bill at WeBirr, we need your Bill ID or Bill Code.",
+        GUZOGO: "Awesome :) Please enter your airline PNR for reservation lookup.",
+        ETAIRFLY: "Enter your PNR reservation code.",
+        LIYUBUS: "Cool! Let's get you a bus ticket. Enter your booking ID.",
         ETHSWITCH: "Select the service provider for the bill you would like to pay.",
     };
+
     useFocusEffect(
         useCallback(() => {
             return () => {
                 dispatch(clearBilllookupState());
-
-
             };
         }, [])
     );
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.instruction}>
-                {vendorTexts[selectedVendor] || "Please enter the required information below."}
-            </Text>
+        <SafeAreaView style={styles.safeArea}>
+            <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+                <Text style={styles.instruction}>
+                    {vendorTexts[selectedVendor] || "Please enter the required information below."}
+                </Text>
 
-            <View style={styles.inputContainer}>
-                <TextInput
-                    value={inputValue}
-                    onChangeText={setInputValue}
-                    style={styles.input}
-                    placeholder="Enter required value"
-                    placeholderTextColor="#A0A0A0"
-                />
-                <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                    <Ionicons name="search" size={24} color="#fff" />
-                </TouchableOpacity>
-            </View>
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        value={inputValue}
+                        onChangeText={setInputValue}
+                        style={styles.input}
+                        placeholder="Enter required value"
+                        placeholderTextColor="#A0A0A0"
+                    />
+                    <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+                        <Ionicons name="search" size={24} color="#fff" />
+                    </TouchableOpacity>
+                </View>
 
-            {/* Response Status UI */}
-            <View style={styles.responseContainer}>
-                {billLookup.error && (
-                    <Text style={[styles.responseText, { color: "red" }]}>
-                        Error: {billLookup.error}
-                    </Text>
-                )}
-
-                {!billLookup.loading &&
-                    !billLookup.error &&
-                    billLookup.data.firstName && (
+                {/* Response Section */}
+                <View style={styles.responseContainer}>
+                    {billLookup.error && (
+                        <Text style={[styles.responseText, { color: "red" }]}>
+                            Error: {billLookup.error}
+                        </Text>
+                    )}
+                    {!billLookup.loading && !billLookup.error && billLookup.data.firstName && (
                         <View style={styles.resultBox}>
                             <Text style={styles.responseText}>Name: {billLookup.data.firstName}</Text>
                             <Text style={styles.responseText}>Phone: {billLookup.data.phoneNumber}</Text>
@@ -97,98 +97,98 @@ const Ethswitch: React.FC<EthswitchProps> = ({ selectedVendor }) => {
                             <Text style={styles.responseText}>Total: {billLookup.data.totalAmount}</Text>
                         </View>
                     )}
-            </View>
-
-            {/* Modal Processing Popup */}
-            <Modal visible={showModal} transparent animationType="fade">
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContainer}>
-                        <ActivityIndicator size="large" color="blue" />
-                        <Text style={{ textAlign: "center", marginTop: 10 }}>
-                            Processing Payment...
-                        </Text>
-                    </View>
                 </View>
-            </Modal>
-        </View>
+
+                {/* Loading Modal */}
+                <Modal visible={showModal} transparent animationType="fade">
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContainer}>
+                            <ActivityIndicator size="large" color="#0057b3" />
+                            <Text style={styles.modalText}>
+                                Processing Payment...
+                            </Text>
+                        </View>
+                    </View>
+                </Modal>
+            </ScrollView>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 16,
+    safeArea: {
+        flex: 1,
         backgroundColor: "#ffffff",
+    },
+    scrollContainer: {
+        padding: 20,
+        alignItems: "center",
+        justifyContent: "center",
     },
     instruction: {
         fontSize: 16,
         textAlign: "center",
         color: "#333",
-        marginBottom: 15,
+        marginBottom: 20,
     },
     inputContainer: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#E6E6E6",
+        backgroundColor: "#F0F0F0",
         borderRadius: 8,
-        width: "90%",
-        marginBottom: 16,
+        width: width * 0.9, // 90% of screen width
+        marginBottom: 20,
     },
     input: {
         flex: 1,
-        paddingVertical: 10,
-        fontSize: 17,
-        paddingHorizontal: 10,
+        paddingVertical: 12,
+        fontSize: 16,
+        paddingHorizontal: 12,
         color: "#333",
     },
     searchButton: {
         backgroundColor: "#0057b3",
-        padding: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
         borderTopRightRadius: 8,
         borderBottomRightRadius: 8,
         justifyContent: "center",
         alignItems: "center",
     },
     responseContainer: {
-        width: "90%",
+        width: width * 0.9,
+        marginTop: 10,
     },
     responseText: {
-        fontSize: 16,
+        fontSize: 15,
         color: "#333",
-        marginVertical: 4,
+        marginVertical: 3,
     },
     resultBox: {
-        padding: 12,
-        backgroundColor: "#f2f2f2",
+        padding: 15,
+        backgroundColor: "#f9f9f9",
         borderRadius: 8,
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: "rgba(0,0,0,0.5)",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
         justifyContent: "center",
-        alignItems: "center",
-    },
-    modalContent: {
-        backgroundColor: "#333",
-        padding: 20,
-        borderRadius: 10,
         alignItems: "center",
     },
     modalContainer: {
-        backgroundColor: "white",
-        padding: 40,
+        width: width * 0.8,
+        padding: 30,
+        backgroundColor: "#fff",
         borderRadius: 10,
-        width: "85%",
-        height: "auto",
         alignItems: "center",
-        justifyContent: "center",
-        elevation: 5
-
+        elevation: 10,
     },
-
+    modalText: {
+        marginTop: 15,
+        fontSize: 16,
+        color: "#333",
+        textAlign: "center",
+    },
 });
 
 export default Ethswitch;
-
-
