@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction, createAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import * as qs from "qs";
 
@@ -52,7 +52,7 @@ export const sendOtp = createAsyncThunk(
         }
     }
 );
-
+export const clearOtpState = createAction("otp/clear");
 const otpSlice = createSlice({
     name: "otp",
     initialState,
@@ -63,6 +63,7 @@ const otpSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            .addCase(clearOtpState, () => initialState)
             .addCase(sendOtp.pending, (state) => {
                 state.status = "loading";
             })

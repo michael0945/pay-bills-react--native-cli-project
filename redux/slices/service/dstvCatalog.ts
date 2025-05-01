@@ -2,26 +2,35 @@ import { createSlice, createAsyncThunk, createAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import qs from "qs";
 
-interface DstvProduct {
+interface DstvCatalogProduct {
     Product: string;
     ProductCode: string;
     MonthlyPrice: string;
     YearlyPrice: string;
+    shortMessage: string | null;
+    status: "idle" | "loading" | "succeeded" | "failed";
+
 }
 
-interface DstvState {
-    catalog: DstvProduct[];
+interface DstvStateCatalog {
+    Product: string;
+    catalog: DstvCatalogProduct[];
     loading: boolean;
+    shortMessage: null,
+    status: "idle" | "loading" | "succeeded" | "failed",
     error: string | null;
 }
 
-const initialState: DstvState = {
+const initialState: DstvStateCatalog = {
+    Product: "",
     catalog: [],
     loading: false,
     error: null,
+    status: "idle",
+    shortMessage: null,
 };
 
-export const fetchDstvCatalog = createAsyncThunk("dstv/fetchCatalog", async () => {
+export const fetchDstvCatalog = createAsyncThunk("dstvCatalog/fetchCatalog", async () => {
     const url = "http://uatc.api.myamole.com:8075/amole/service";
     const data = qs.stringify({
         BODY_ServiceRequest: "<Service>DStvCatalog</Service>",
@@ -39,7 +48,7 @@ export const fetchDstvCatalog = createAsyncThunk("dstv/fetchCatalog", async () =
 
     const raw = response.data[0].BODY_ServiceResponse;
     const parsed = JSON.parse(raw);
-    return parsed.DStvCatalog as DstvProduct[];
+    return parsed.DStvCatalog as DstvCatalogProduct[];
 });
 export const clearDSTVCatalog = createAction("dstvCatalog/clear");
 
@@ -57,14 +66,17 @@ const dstvCatalogSlice = createSlice({
         builder
             .addCase(clearDSTVCatalog, () => initialState)
             .addCase(fetchDstvCatalog.pending, (state) => {
+                state.status = "loading";
                 state.loading = true;
                 state.error = null;
             })
             .addCase(fetchDstvCatalog.fulfilled, (state, action) => {
+                state.status = "succeeded";
                 state.loading = false;
                 state.catalog = action.payload;
             })
             .addCase(fetchDstvCatalog.rejected, (state, action) => {
+                state.status = "failed";
                 state.loading = false;
                 state.error = action.error.message || "Something went wrong";
             });

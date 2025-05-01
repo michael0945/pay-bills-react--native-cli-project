@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
@@ -20,7 +20,8 @@ import {
 } from "../../redux/paymentSlice";
 import { setCardNumber, setPinDp } from "../../redux/dstvPaymentSlice";
 import Toast, { BaseToast, ToastConfig } from "react-native-toast-message";
-import { setCardNumberC } from "../../redux/dstvCatalogPaymentSlice";
+import { setCardNumberC, setPinDpC } from "../../redux/dstvCatalogPaymentSlice";
+import { setCardNumberD, setPinDpD } from "../../redux/derashPaymentSlice";
 
 const CustomToast = ({ text2 }: any) => (
     <View style={styles.customToastContainer}>
@@ -51,6 +52,7 @@ const OTP = () => {
         dispatch(setMobileNumber1(text));
         dispatch(setCardNumber(text));
         dispatch(setCardNumberC(text));
+        dispatch(setCardNumberD(text));
 
     };
 
@@ -58,6 +60,8 @@ const OTP = () => {
         setInputValueOtp(text);
         dispatch(setPin(text));
         dispatch(setPinDp(text));
+        dispatch(setPinDpD(text));
+        dispatch(setPinDpC(text));
     };
 
     const handleSendOtp = async () => {
@@ -92,6 +96,16 @@ const OTP = () => {
             });
         }
     };
+    useEffect(() => {
+        if (selectedTab === "Cash") {
+            dispatch(setMobileNumber("CASH"));
+            dispatch(setMobileNumber1("CASH"));
+            dispatch(setCardNumber("CASH"));
+            dispatch(setCardNumberC("CASH"));
+            dispatch(setCardNumberD("CASH"));
+        }
+    }, [selectedTab, dispatch]);
+
 
     return (
         <View style={styles.container}>
@@ -166,18 +180,22 @@ const OTP = () => {
                         style={styles.input}
                         placeholder="Account/Card Number"
                         keyboardType="default"
+                        onChangeText={handleChange}
+
                     />
                     <TextInput
                         style={styles.input}
                         placeholder="PIN"
                         keyboardType="number-pad"
                         secureTextEntry
+                        onChangeText={handleOtp}
                     />
                 </View>
             )}
 
             {selectedTab === "Cash" && (
-                <Text style={styles.infoText}>
+                <Text style={styles.infoText} onPress={() => dispatch(setCardNumber("CASH"))} >
+
                     Please proceed to the counter for cash payment.
                 </Text>
             )}
@@ -190,16 +208,56 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#fff",
-        marginTop: 20,
-        marginBottom: 15,
-        paddingTop: 20,
+
+
+        paddingBottom: 20,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+
+
+        borderRadius: 10,
+        elevation: 3,
+
+
+        marginTop: 15,
+        marginBottom: 5,
+        padding: 15,
+
+
+
+
+
+
+
+
+        borderColor: "#ccc",
+
+
+
+
+
+
+
 
 
     },
     label: {
-        fontSize: 18,
-        fontWeight: "bold",
+        fontSize: 17,
+        color: "#333",
         marginBottom: 10,
+        fontWeight: "bold",
+
+        marginTop: 10,
+
+        paddingTop: 10,
+        paddingBottom: 10,
+
+        borderRadius: 8,
+        paddingHorizontal: 10,
+
+
+
     },
     tabs: {
         flexDirection: "row",

@@ -212,6 +212,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { Picker } from "@react-native-picker/picker";
 import { fetchDerashBillers } from "../../redux/slices/service/derashSlice";
 import { setBillerID } from "../../redux/aggrigatorSlice";
+import { setAdditionalInfo2D, setVendorAccountD } from "../../redux/derashPaymentSlice";
 
 const screenWidth = Dimensions.get("window").width;
 const numColumns = 3;
@@ -280,88 +281,100 @@ const PayBillsScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.instruction}>
-        Please select the vendor or service provider for the bill you would like to pay.
-      </Text>
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.instruction}>
+          Please select the vendor or service provider for the bill you would like to pay.
+        </Text>
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="green" />
-          <Text style={styles.loadingText}>Loading vendors for paybills...</Text>
-        </View>
-      ) : error ? (
-        <Text style={styles.error}>{error}</Text>
-      ) : (
-        <>
-          <Animated.View style={[styles.grid, { opacity: fadeAnim }]}>
-            <FlatList
-              data={vendorCodes}
-              numColumns={numColumns}
-              keyExtractor={(item, index) => index.toString()}
-              contentContainerStyle={styles.grid}
-              renderItem={({ item }) => {
-                const isSelected = selectedVendor === item.toUpperCase();
-                return (
-                  <TouchableOpacity
-                    style={[
-                      styles.vendorButton,
-                      { width: buttonWidth },
-                      isSelected && styles.selectedVendor,
-                    ]}
-                    onPress={() => handleVendorClick(item)}
-                  >
-                    <Text style={[styles.vendorText, isSelected && styles.selectedVendorText]}>
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          </Animated.View>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="green" />
+            <Text style={styles.loadingText}>Loading vendors for paybills...</Text>
+          </View>
+        ) : error ? (
+          <Text style={styles.error}>{error}</Text>
+        ) : (
+          <>
+            <Animated.View style={[styles.grid, { opacity: fadeAnim }]}>
+              <FlatList
+                data={vendorCodes}
+                numColumns={numColumns}
+                keyExtractor={(item, index) => index.toString()}
+                contentContainerStyle={styles.grid}
+                scrollEnabled={false}
+                renderItem={({ item }) => {
+                  const isSelected = selectedVendor === item.toUpperCase();
+                  return (
+                    <TouchableOpacity
+                      style={[
+                        styles.vendorButton,
+                        { width: buttonWidth },
+                        isSelected && styles.selectedVendor,
+                      ]}
+                      onPress={() => handleVendorClick(item)}
+                    >
+                      <Text style={[styles.vendorText, isSelected && styles.selectedVendorText]}>
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+            </Animated.View>
 
-          {selectedVendor && selectedVendor !== "DERASH" && selectedVendor !== "UNICASH" && (
-            <Ethswitch selectedVendor={selectedVendor} />
-          )}
+            {selectedVendor && selectedVendor !== "DERASH" && selectedVendor !== "UNICASH" && (
+              <Ethswitch selectedVendor={selectedVendor} />
+            )}
 
-          {selectedVendor === "DERASH" && (
-            <ScrollView>
-              {derashState.loading ? (
-                <Modal transparent animationType="fade">
-                  <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                      <ActivityIndicator size="large" color="#2AB930" />
-                    </View>
-                  </View>
-                </Modal>
-              ) : (
-                <Picker
-                  selectedValue={selectedBiller}
-                  onValueChange={(itemValue) => {
-                    setSelectedBiller(itemValue);
-                    dispatch(setBillerID(itemValue));
-                  }}
-                  style={{ marginVertical: 10 }}
-                >
-                  <Picker.Item label="Select Biller" value="" />
-                  {derashState.billers.map((biller) => (
-                    <Picker.Item
-                      key={biller.BillerID}
-                      label={biller.Name}
-                      value={biller.BillerID}
-                    />
-                  ))}
-                </Picker>
-              )}
+            {selectedVendor === "DERASH" && (
 
-              <BillAggrigator />
-            </ScrollView>
-          )}
+              <View style={{ marginTop: 20 }}>
+                {derashState.loading ? (
+                  <ActivityIndicator size="large" color="#2AB930" />
+                ) : derashState.error ? (
+                  <Text style={styles.error}>{derashState.error}</Text>
+                ) : (
+                  <>
+                    <Picker
+                      selectedValue={selectedBiller}
+                      onValueChange={(itemValue) => {
+                        setSelectedBiller(itemValue);
+                        dispatch(setBillerID(itemValue))
+                        dispatch(setAdditionalInfo2D(itemValue));
+                      }}
+                      style={styles.picker}
+                    >
+                      <Picker.Item label="Select Biller" value="" />
+                      {derashState.billers.map((biller) => (
+                        <Picker.Item
+                          key={biller.BillerID}
+                          label={biller.Name}
+                          value={biller.BillerID}
+                        />
+                      ))}
+                    </Picker>
+                    {selectedBiller ? (
+                      ""
+                    ) : null}
+                  </>
 
-          {selectedVendor === "UNICASH" && <Unicash />}
-        </>
-      )}
-    </SafeAreaView>
+                )}
+                <BillAggrigator />
+              </View>
+
+            )}
+
+
+            {selectedVendor === "UNICASH" && (
+              <View style={{ marginTop: 20 }}>
+                <Unicash />
+              </View>
+            )}
+          </>
+        )}
+      </SafeAreaView>
+    </ScrollView>
   );
 };
 
@@ -424,6 +437,11 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     alignItems: "center",
+  },
+  picker: {
+    backgroundColor: "#f0f0f0",
+    marginHorizontal: 10,
+    borderRadius: 8,
   },
 });
 

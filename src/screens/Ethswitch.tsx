@@ -17,7 +17,7 @@ import { fetchBillLookupData, clearBilllookupState } from "../../redux/billLooku
 import { RootState, AppDispatch } from "../../redux/store";
 import { useFocusEffect } from "@react-navigation/native";
 
-// Get device width
+
 const { width } = Dimensions.get("window");
 
 interface EthswitchProps {

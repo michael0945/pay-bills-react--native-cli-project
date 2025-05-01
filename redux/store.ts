@@ -13,6 +13,7 @@ import dstvCalculationReducer from './dstvCalculationSlice';
 import aggrigatorReducer from './aggrigatorSlice'
 import derashReducer from './slices/service/derashSlice'
 import amolePaymentReducer from './amolePaymentSlice'
+import derashPaymentReducer from './derashPaymentSlice';
 
 const store = configureStore({
   reducer: {
@@ -29,7 +30,8 @@ const store = configureStore({
     dstvCalculation: dstvCalculationReducer,
     aggrigator: aggrigatorReducer,
     derash: derashReducer,
-    amolePayment: amolePaymentReducer
+    amolePayment: amolePaymentReducer,
+    derashPayment: derashPaymentReducer,
 
 
 

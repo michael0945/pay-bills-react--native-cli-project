@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    paddingVertical: normalize(16),
+    paddingVertical: normalize(30),
     paddingHorizontal: normalize(20),
     marginVertical: normalize(4),
     borderRadius: normalize(8),
@@ -118,5 +118,5 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
-export { normalize }; // Export the normalize function for use in other files
-export type { HomeScreenNavigationProp }; // Export the navigation prop type for use in other files
+export { normalize };
+export type { HomeScreenNavigationProp }; 

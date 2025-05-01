@@ -1,7 +1,8 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction, createAction } from "@reduxjs/toolkit";
 import { RootState } from "./store";
 import AmolePayment from "../services/AmolePayment";
 import configuration from "../config/configurations";
+import { clearDSTVCatalog } from "./slices/service/dstvCatalog";
 
 
 interface DSTVCatalogPaymentState {
@@ -77,6 +78,7 @@ export const fetchDSTVCatalogPayment = createAsyncThunk(
         }
     }
 );
+export const cleardstvCatalogPaymentState = createAction("dstvCatalogPayment/clear");
 
 const dstvCatalogPaymentSlice = createSlice({
     name: "dstvCatalogPayment",
@@ -104,6 +106,7 @@ const dstvCatalogPaymentSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            .addCase(cleardstvCatalogPaymentState, () => initialState)
             .addCase(fetchDSTVCatalogPayment.pending, (state) => {
                 state.loading = true;
                 state.status = "loading";

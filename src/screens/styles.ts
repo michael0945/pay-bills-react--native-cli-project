@@ -4,7 +4,175 @@ const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
     scrollContainer: { flexGrow: 1 },
-    container: { flex: 1, backgroundColor: "#ffffff", padding: 15 },
+    container: { backgroundColor: "#ffffff", padding: 15, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, borderRadius: 10, marginTop: 15 },
+    amountUI: { borderRadius: 10, marginTop: 5, marginBottom: -7, padding: 15, },
+    amountUICatalog: { borderRadius: 10, marginTop: 7, paddingTop: 2, marginBottom: -7, padding: 15, backgroundColor: "#ffffff", },
+    receiptModal: {
+        padding: 20,
+        backgroundColor: '#fff',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 10,
+        width: '94%',
+        height: 'auto',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        marginLeft: 15,
+        marginRight: 15,
+        marginTop: 30,
+        marginBottom: -15,
+
+
+
+    },
+    receiptCard: {
+        width: '100%',
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        elevation: 3,
+        padding: 1,
+        alignItems: 'flex-start',
+
+        alignContent: 'center',
+        justifyContent: "space-between",
+
+    },
+    container3: {
+
+        flexDirection: 'row',
+
+        gap: 8,
+        padding: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+
+        marginBottom: 40,
+        paddingTop: 10,
+        paddingBottom: 10,
+    },
+    button1: {
+        height: 40,
+        paddingHorizontal: 12,
+        borderRadius: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: 10,
+
+    },
+    print: {
+        backgroundColor: '#007bff',
+        paddingHorizontal: 30,
+        paddingVertical: 20,
+
+        marginTop: 10,
+        marginBottom: 10,
+
+        marginRight: 40,
+
+    },
+    share: {
+        backgroundColor: '#28a745',
+        paddingHorizontal: 30,
+        paddingVertical: 20,
+        marginBottom: 10,
+        marginLeft: -30,
+
+    },
+    cancel: {
+        backgroundColor: '#212121',
+
+        paddingHorizontal: 30,
+        paddingVertical: 20,
+        marginBottom: 10,
+
+    },
+    cancelText: {
+        color: '#fff',
+        fontSize: 14,
+    },
+    logo: {
+        width: 100,
+        height: 30,
+        alignSelf: 'center',
+        marginBottom: 10,
+    },
+    headerText: {
+        fontWeight: 'bold',
+        fontSize: 16,
+        textAlign: 'center',
+        alignSelf: 'center',
+    },
+    subHeaderText: {
+        fontSize: 14,
+        textAlign: 'center',
+        alignSelf: 'center',
+    },
+    textLine: {
+        fontSize: 13,
+        marginVertical: 2,
+    },
+    boldText: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        marginTop: 1,
+    },
+    separator: {
+        height: 1,
+        backgroundColor: '#ccc',
+        marginVertical: 10,
+        width: '100%',
+    },
+    footer: {
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    footerLogo: {
+        width: 60,
+        height: 20,
+        marginBottom: 4,
+    },
+    footerText: {
+        fontSize: 11,
+        color: '#777',
+        textAlign: 'center',
+    },
+    row1: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 2,
+        paddingHorizontal: 10,
+        borderBottomWidth: 0.5,
+        borderBottomColor: '#ccc',
+        width: '100%',
+    },
+    label1: {
+        fontSize: 14,
+        color: '#000',
+        flex: 1,
+    },
+
+    value1: {
+        fontSize: 14,
+        color: '#000',
+        textAlign: 'right',
+        flex: 1,
+    },
+    printButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'center',
+        marginTop: 20,
+        backgroundColor: '#f0f0f0',
+        padding: 10,
+        borderRadius: 6,
+    },
+    printButtonText: {
+        marginLeft: 5,
+        fontSize: 14,
+    },
     section: { marginBottom: 20 },
     sectionTitle: { fontSize: 16, fontWeight: "bold", color: "#333", marginBottom: 10 },
     label: { fontSize: 14, color: "#666", marginBottom: 5 },
@@ -28,6 +196,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         borderRadius: 8,
         marginTop: 10,
+
     },
     // buttonText: { color: "white", fontSize: 16, fontWeight: "bold" },
     errorText: { color: "red", fontSize: 14, marginTop: 5 },
@@ -45,7 +214,15 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         alignItems: "center",
         marginVertical: 20,
-        marginHorizontal: 1
+        marginHorizontal: 15,
+        elevation: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        minHeight: 50,
+        width: "90%",
+
     },
     submitText: {
         color: "#fff",

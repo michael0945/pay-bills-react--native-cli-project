@@ -1,72 +1,21 @@
-// import React from "react";
-// import { createStackNavigator } from "@react-navigation/stack";
-// import { NavigationContainer } from "@react-navigation/native";
-// import HomeScreen from "./screens/HomeScreen";
-// import PayBillsScreen from "./screens/PayBillsScreen";
-
-// const Stack = createStackNavigator();
-
-// const AppNavigator = () => {
-//   return (
-//     <NavigationContainer>
-//       <Stack.Navigator>
-//         <Stack.Screen name="Home" component={HomeScreen} />
-//         <Stack.Screen name="PayBills" component={PayBillsScreen} />
-//       </Stack.Navigator>
-//     </NavigationContainer>
-//   );
-// };
-
-// export default AppNavigator;
-// import React from "react";
-// import { createStackNavigator } from "@react-navigation/stack";
-// import { NavigationContainer } from "@react-navigation/native";
-// import HomeScreen from "./screens/HomeScreen";
-// import PayBillsScreen from "./screens/PayBillsScreen";
-
-// const Stack = createStackNavigator();
-
-// const AppNavigator = () => {
-//   return (
-//     <NavigationContainer>
-//       <Stack.Navigator
-//         screenOptions={{
-//           headerStyle: {
-//             backgroundColor: "#015CB7", // Set background color here
-//           },
-//           headerTintColor: "#fff", // Set text color to white for contrast
-//           headerTitleStyle: {
-//             fontWeight: "bold", // Optional: Makes title bold
-//           },
-//         }}
-//       >
-//         <Stack.Screen name="Home" component={HomeScreen} />
-//         <Stack.Screen name="PayBills" component={PayBillsScreen} />
-//       </Stack.Navigator>
-//     </NavigationContainer>
-//   );
-// };
-
-// export default AppNavigator;
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  Platform,
-  useWindowDimensions,
-  SafeAreaView,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image, SafeAreaView, useWindowDimensions, Platform } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
+import { createDrawerNavigator } from "@react-navigation/drawer";
 import { NavigationContainer } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
+
+// Screens
 import HomeScreen from "./screens/HomeScreen";
 import PayBillsScreen from "./screens/PayBillsScreen";
 import DstvPaymentScreen from "./screens/DSTVPaymentScreen";
+
+
+// Sidebar
+import Sidebar from "./screens//Sidebar";
 import AirtimeScreen from "./screens/Airtime";
 
+// Types
 type RootStackParamList = {
   Home: undefined;
   PayBills: undefined;
@@ -75,17 +24,15 @@ type RootStackParamList = {
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
+const Drawer = createDrawerNavigator();
 
+// Custom Header
 const getScreenDisplayInfo = (routeName: string) => {
   switch (routeName) {
-    case "PayBills":
-      return { title: "Pay Bills", icon: "card-outline" };
-    case "DstvPayment":
-      return { title: "DSTV Payment", icon: "tv-outline" };
-    case "AirtimeScreen":
-      return { title: "Airtime", icon: "call-outline" };
-    default:
-      return { title: "MICHAELM", icon: "" };
+    case "PayBills": return { title: "Pay Bills", icon: "card-outline" };
+    case "DstvPayment": return { title: "DSTV Payment", icon: "tv-outline" };
+    case "AirtimeScreen": return { title: "Airtime", icon: "call-outline" };
+    default: return { title: "MICHAELM", icon: "" };
   }
 };
 
@@ -93,11 +40,19 @@ const CustomHeader: React.FC<{ navigation: any; routeName: string }> = ({ naviga
   const { width } = useWindowDimensions();
   const { title, icon } = getScreenDisplayInfo(routeName);
 
+  const canGoBack = navigation.canGoBack();
+
   return (
     <SafeAreaView style={{ backgroundColor: "#015CB7" }}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.openDrawer?.()}>
-          <Ionicons name="menu" size={28} color="#fff" style={styles.menuIcon} />
+        {/* If can go back, show back arrow, else show menu icon */}
+        <TouchableOpacity onPress={() => canGoBack ? navigation.goBack() : navigation.openDrawer()}>
+          <Ionicons
+            name={canGoBack ? "arrow-back" : "menu"}
+            size={28}
+            color="#fff"
+            style={styles.menuIcon}
+          />
         </TouchableOpacity>
 
         <Image source={require("../assets/p1.png.png")} style={[styles.logo, { maxWidth: width * 0.25 }]} />
@@ -116,15 +71,13 @@ const CustomHeader: React.FC<{ navigation: any; routeName: string }> = ({ naviga
   );
 };
 
+// Stack inside Drawer
 const StackNavigator = () => {
   return (
     <Stack.Navigator
-      screenOptions={({ navigation, route }) => {
-        const routeName = route.name;
-        return {
-          header: () => <CustomHeader navigation={navigation} routeName={routeName} />,
-        };
-      }}
+      screenOptions={({ navigation, route }) => ({
+        header: () => <CustomHeader navigation={navigation} routeName={route.name} />,
+      })}
     >
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="PayBills" component={PayBillsScreen} />
@@ -133,6 +86,23 @@ const StackNavigator = () => {
     </Stack.Navigator>
   );
 };
+
+
+const AppNavigator: React.FC = () => {
+  return (
+    <NavigationContainer>
+      <Drawer.Navigator
+        drawerContent={(props) => <Sidebar {...props} />}
+        screenOptions={{ headerShown: false }}
+      >
+        <Drawer.Screen name="StackNavigator" component={StackNavigator} />
+      </Drawer.Navigator>
+    </NavigationContainer>
+  );
+};
+
+export default AppNavigator;
+
 
 const styles = StyleSheet.create({
   header: {
@@ -150,6 +120,12 @@ const styles = StyleSheet.create({
   logo: {
     height: 40,
     resizeMode: "contain",
+
+    marginRight: 100,
+
+
+
+
   },
   userGreeting: {
     color: "#FFD700",
@@ -179,78 +155,5 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 });
-
-const AppNavigator: React.FC = () => {
-  return (
-    <NavigationContainer>
-      <StackNavigator />
-    </NavigationContainer>
-  );
-};
-
-export default AppNavigator;
-
-
-
-// import React from "react";
-// import { createStackNavigator } from "@react-navigation/stack";
-// import { NavigationContainer } from "@react-navigation/native";
-// import HomeScreen from "./screens/HomeScreen";
-// import PayBillsScreen from "./screens/PayBillsScreen";
-// import DstvPaymentScreen from "./screens/DSTVPaymentScreen";
-
-// const Stack = createStackNavigator();
-
-// const AppNavigator = () => {
-//   return (
-//     <NavigationContainer>
-//       <Stack.Navigator
-//         screenOptions={{
-//           headerStyle: { backgroundColor: "#015CB7" },
-//           headerTintColor: "#fff",
-//           headerTitleStyle: { fontWeight: "bold" },
-//         }}
-//       >
-//         <Stack.Screen name="Home" component={HomeScreen} />
-//         <Stack.Screen name="PayBills" component={PayBillsScreen} />
-//         <Stack.Screen name="DstvPayment" component={DstvPaymentScreen} />
-//       </Stack.Navigator>
-//     </NavigationContainer>
-//   );
-// };
-
-// export default AppNavigator;
-// import React from "react";
-// import { createStackNavigator } from "@react-navigation/stack";
-// import { NavigationContainer } from "@react-navigation/native";
-// import HomeScreen from "./screens/HomeScreen";
-// import PayBillsScreen from "./screens/PayBillsScreen";
-// import DstvPaymentScreen from "./screens/DSTVPaymentScreen";
-// import AirtimeScreen from "./screens/Airtime"; // Added AirtimeScreen
-// import Ethswitch from "./screens/Ethswitch";
-
-// const Stack = createStackNavigator();
-
-// const AppNavigator = () => {
-//   return (
-//     <NavigationContainer>
-//       <Stack.Navigator
-//         screenOptions={{
-//           headerStyle: { backgroundColor: "#015CB7" },
-//           headerTintColor: "#fff",
-//           headerTitleStyle: { fontWeight: "bold" },
-//         }}
-//       >
-//         <Stack.Screen name="Home" component={HomeScreen} />
-//         <Stack.Screen name="PayBills" component={PayBillsScreen} />
-//         <Stack.Screen name="DstvPayment" component={DstvPaymentScreen} />
-//         <Stack.Screen name="AirtimeScreen" component={AirtimeScreen} />
-//         {/* <Stack.Screen name="Ethswitch" component={Ethswitch} /> */}
-//       </Stack.Navigator>
-//     </NavigationContainer>
-//   );
-// };
-
-// export default AppNavigator;
 
 

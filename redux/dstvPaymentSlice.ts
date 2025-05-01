@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction, createAction } from "@reduxjs/toolkit";
 import { RootState } from "./store";
 import AmolePayment from "../services/AmolePayment";
 import configuration from "../config/configurations";
@@ -15,6 +15,8 @@ interface DSTVPaymentState {
     loading: boolean;
     error: string | null;
     longMessage: string | null;
+    bcardNumber: string | null;
+
 
 }
 
@@ -29,6 +31,7 @@ const initialState: DSTVPaymentState = {
     loading: false,
     error: null,
     longMessage: null,
+    bcardNumber: null,
 };
 
 export const fetchDSTVPayment = createAsyncThunk(
@@ -63,12 +66,16 @@ export const fetchDSTVPayment = createAsyncThunk(
                 shortMessage: response.MSG_ShortMessage,
                 referenceNumber: response.HDR_ReferenceNumber,
                 amount: response.BODY_Amount,
+                bcardNumber: response.BODY_CardNumber || response.CARD_Number || null
+
+
             };
         } catch (error: any) {
             return rejectWithValue(error.message || "Something went wrong");
         }
     }
 );
+export const clearDstvPaymentState = createAction("dstvPayment/clear");
 
 const dstvPaymentSlice = createSlice({
     name: "dstvPayment",
@@ -90,6 +97,7 @@ const dstvPaymentSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            .addCase(clearDstvPaymentState, () => initialState)
             .addCase(fetchDSTVPayment.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -99,6 +107,7 @@ const dstvPaymentSlice = createSlice({
                 state.shortMessage = action.payload.shortMessage;
                 state.referenceNumber = action.payload.referenceNumber;
                 state.amount = action.payload.amount;
+                state.bcardNumber = action.payload.bcardNumber;
             })
             .addCase(fetchDSTVPayment.rejected, (state, action) => {
                 state.loading = false;
