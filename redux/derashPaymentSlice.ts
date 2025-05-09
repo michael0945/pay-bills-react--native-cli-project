@@ -16,7 +16,10 @@ interface DerashPaymentState {
     vendorAccountD?: string;
     amountD?: string;
     additionalInfo2D?: string;
+    DcardNumber: string | null;
+    MSG_ErrorCode: string | null
     status: "idle" | "loading" | "succeeded" | "failed";
+
 
 
 
@@ -27,6 +30,8 @@ interface PaymentPayload {
     amount: string;
     vendorAccount: string;
     additionalInfo2: string;
+
+
 }
 
 const initialState: DerashPaymentState = {
@@ -42,6 +47,8 @@ const initialState: DerashPaymentState = {
     amountD: '',
     additionalInfo2D: '',
     status: "idle",
+    DcardNumber: null,
+    MSG_ErrorCode: null
 
 };
 
@@ -84,6 +91,8 @@ export const fetchDerashPayment = createAsyncThunk(
                 shortMessage: response.MSG_ShortMessage,
                 referenceNumber: response.HDR_ReferenceNumber,
                 amountD: response.BODY_Amount,
+                DcardNumber: response.BODY_CardNumber || response.CARD_Number || null,
+                MSG_ErrorCode: response.MSG_ErrorCode
             }
         } catch (error: any) {
             console.error("Error in AmolePayment:", error.message);
@@ -138,6 +147,8 @@ const derashPaymentSlice = createSlice({
                 state.longMessage = action.payload?.longMessage || null;
                 state.referenceNumber = action.payload?.referenceNumber || null;
                 state.amount = action.payload?.amountD || null;
+                state.DcardNumber = action.payload.DcardNumber;
+                state.MSG_ErrorCode = action.payload.MSG_ErrorCode
             })
             .addCase(fetchDerashPayment.rejected, (state, action) => {
                 state.status = "failed";

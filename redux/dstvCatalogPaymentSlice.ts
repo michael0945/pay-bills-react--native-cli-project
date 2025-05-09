@@ -18,6 +18,10 @@ interface DSTVCatalogPaymentState {
     loading: boolean;
     error: string | null;
     status: "idle" | "loading" | "succeeded" | "failed";
+    CcardNumber: string | null;
+    MSG_ErrorCode: string | null
+    longMessage: string | null;
+
 }
 
 const initialState: DSTVCatalogPaymentState = {
@@ -33,6 +37,9 @@ const initialState: DSTVCatalogPaymentState = {
     loading: false,
     error: null,
     status: "idle",
+    CcardNumber: null,
+    longMessage: null,
+    MSG_ErrorCode: null
 };
 
 export const fetchDSTVCatalogPayment = createAsyncThunk(
@@ -72,6 +79,10 @@ export const fetchDSTVCatalogPayment = createAsyncThunk(
                 shortMessage: response.MSG_ShortMessage,
                 referenceNumber: response.HDR_ReferenceNumber,
                 amount: response.BODY_Amount,
+                CcardNumber: response.BODY_CardNumber || response.CARD_Number || null,
+                longMessage: response.MSG_LongMessage,
+                MSG_ErrorCode: response.MSG_ErrorCode
+
             };
         } catch (error: any) {
             return rejectWithValue(error.message || "Something went wrong");
@@ -118,11 +129,15 @@ const dstvCatalogPaymentSlice = createSlice({
                 state.shortMessage = action.payload.shortMessage;
                 state.referenceNumber = action.payload.referenceNumber;
                 state.amount = action.payload.amount;
+                state.CcardNumber = action.payload.CcardNumber;
+                state.MSG_ErrorCode = action.payload.MSG_ErrorCode
+                state.longMessage = action.payload.longMessage
             })
             .addCase(fetchDSTVCatalogPayment.rejected, (state, action) => {
                 state.loading = false;
                 state.status = "failed";
                 state.error = action.payload as string;
+                state.longMessage = action.payload as string;
             });
     },
 });

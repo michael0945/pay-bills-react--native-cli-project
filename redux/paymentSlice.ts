@@ -155,6 +155,8 @@ interface PaymentResponse {
     longMessage: string;
     referenceNumber: string;
     amountD: string;
+    AcardNumber: string | null;
+    MSG_ErrorCode: string | null
 }
 
 interface PaymentState {
@@ -170,6 +172,8 @@ interface PaymentState {
     referenceNumber: string;
     responseAmount: string;
     status: "idle" | "loading" | "succeeded" | "failed";
+    AcardNumber: string | null;
+    MSG_ErrorCode: string | null
 }
 
 const initialState: PaymentState = {
@@ -185,6 +189,8 @@ const initialState: PaymentState = {
     referenceNumber: "",
     responseAmount: "",
     status: "idle",
+    AcardNumber: null,
+    MSG_ErrorCode: null
 };
 
 export const submitPayment = createAsyncThunk<
@@ -195,7 +201,7 @@ export const submitPayment = createAsyncThunk<
     "payment/submitPayment",
     async (_, { getState, rejectWithValue }) => {
         try {
-            const state = (getState() as RootState).payment;
+            const state = getState().payment;
 
             const requestBody = {
                 BODY_CardNumber: state.mobileNumber,
@@ -217,11 +223,14 @@ export const submitPayment = createAsyncThunk<
             const response = await AmolePayment(requestBody);
             console.log("API Response:", response);
 
+
             return {
                 shortMessage: response.MSG_ShortMessage,
                 longMessage: response.MSG_LongMessage,
                 referenceNumber: response.HDR_ReferenceNumber,
                 amountD: response.BODY_Amount,
+                AcardNumber: response.BODY_CardNumber || response.CARD_Number || null,
+                MSG_ErrorCode: response.MSG_ErrorCode
             };
         } catch (error: any) {
             return rejectWithValue(error.message || "Payment failed");
@@ -250,9 +259,7 @@ const paymentSlice = createSlice({
         setPin: (state, action: PayloadAction<string>) => {
             state.pin = action.payload;
         },
-        resetForm: (state) => {
-            Object.assign(state, initialState);
-        },
+        resetForm: () => initialState,
     },
     extraReducers: (builder) => {
         builder
@@ -273,12 +280,16 @@ const paymentSlice = createSlice({
                 state.longMessage = action.payload.longMessage;
                 state.referenceNumber = action.payload.referenceNumber;
                 state.responseAmount = action.payload.amountD;
+                state.AcardNumber = action.payload.AcardNumber;
+                state.MSG_ErrorCode = action.payload.MSG_ErrorCode
+                state.longMessage = action.payload.longMessage
             })
             .addCase(submitPayment.rejected, (state, action) => {
                 state.loading = false;
                 state.status = "failed";
-                state.error = action.payload || "Unknown error";
-                state.longMessage = action.payload || "Payment failed";
+                const errorMsg = (action as PayloadAction<string>).payload || "Unknown error";
+                state.error = errorMsg;
+                state.longMessage = errorMsg;
             });
     },
 });

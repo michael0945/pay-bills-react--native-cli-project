@@ -282,54 +282,60 @@ const PayBillsScreen: React.FC = () => {
 
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.instruction}>
-          Please select the vendor or service provider for the bill you would like to pay.
-        </Text>
+      <SafeAreaView >
+        <View style={styles.container}>
+          <Text style={styles.instruction}>
+            Please select the vendor or service provider for the bill you would like to pay.
+          </Text>
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="green" />
-            <Text style={styles.loadingText}>Loading vendors for paybills...</Text>
-          </View>
-        ) : error ? (
-          <Text style={styles.error}>{error}</Text>
-        ) : (
-          <>
-            <Animated.View style={[styles.grid, { opacity: fadeAnim }]}>
-              <FlatList
-                data={vendorCodes}
-                numColumns={numColumns}
-                keyExtractor={(item, index) => index.toString()}
-                contentContainerStyle={styles.grid}
-                scrollEnabled={false}
-                renderItem={({ item }) => {
-                  const isSelected = selectedVendor === item.toUpperCase();
-                  return (
-                    <TouchableOpacity
-                      style={[
-                        styles.vendorButton,
-                        { width: buttonWidth },
-                        isSelected && styles.selectedVendor,
-                      ]}
-                      onPress={() => handleVendorClick(item)}
-                    >
-                      <Text style={[styles.vendorText, isSelected && styles.selectedVendorText]}>
-                        {item}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                }}
-              />
-            </Animated.View>
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="green" />
+              <Text style={styles.loadingText}>Loading vendors for paybills...</Text>
+            </View>
+          ) : error ? (
+            <Text style={styles.error}>{error}</Text>
+          ) : (
+            <>
+              <Animated.View style={[styles.grid, { opacity: fadeAnim }]}>
+                <FlatList
+                  data={vendorCodes}
+                  numColumns={numColumns}
+                  keyExtractor={(item, index) => index.toString()}
+                  contentContainerStyle={styles.grid}
+                  scrollEnabled={false}
+                  renderItem={({ item }) => {
+                    const isSelected = selectedVendor === item.toUpperCase();
+                    return (
+                      <TouchableOpacity
+                        style={[
+                          styles.vendorButton,
+                          { width: buttonWidth },
+                          isSelected && styles.selectedVendor,
+                        ]}
+                        onPress={() => handleVendorClick(item)}
+                      >
+                        <Text style={[styles.vendorText, isSelected && styles.selectedVendorText]}>
+                          {item}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  }}
+                />
+              </Animated.View>
 
-            {selectedVendor && selectedVendor !== "DERASH" && selectedVendor !== "UNICASH" && (
-              <Ethswitch selectedVendor={selectedVendor} />
-            )}
 
-            {selectedVendor === "DERASH" && (
+            </>
+          )}
+        </View>
+        <View style={styles.container2}>
+          {selectedVendor && selectedVendor !== "DERASH" && selectedVendor !== "UNICASH" && (
+            <Ethswitch selectedVendor={selectedVendor} />
+          )}
 
-              <View style={{ marginTop: 20 }}>
+          {selectedVendor === "DERASH" && (
+            <>
+              <View style={styles.container1}>
                 {derashState.loading ? (
                   <ActivityIndicator size="large" color="#2AB930" />
                 ) : derashState.error ? (
@@ -360,19 +366,19 @@ const PayBillsScreen: React.FC = () => {
                   </>
 
                 )}
-                <BillAggrigator />
+
               </View>
+              <BillAggrigator />
+            </>
+          )}
 
-            )}
 
-
-            {selectedVendor === "UNICASH" && (
-              <View style={{ marginTop: 20 }}>
-                <Unicash />
-              </View>
-            )}
-          </>
-        )}
+          {selectedVendor === "UNICASH" && (
+            <View style={{ marginTop: 20 }}>
+              <Unicash />
+            </View>
+          )}
+        </View>
       </SafeAreaView>
     </ScrollView>
   );
@@ -380,9 +386,13 @@ const PayBillsScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#ffffff",
-    padding: 10,
+    flex: 1, backgroundColor: "#ffffff", padding: 10, shadowOpacity: 0.2, shadowRadius: 4, marginTop: 15, elevation: 4
+  },
+  container2: {
+    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, borderRadius: 10, marginTop: 15
+  },
+  container1: {
+    backgroundColor: "#ffffff", padding: 20, shadowOpacity: 0.2, shadowRadius: 4, elevation: 4
   },
   instruction: {
     fontSize: 16,
@@ -440,7 +450,7 @@ const styles = StyleSheet.create({
   },
   picker: {
     backgroundColor: "#f0f0f0",
-    marginHorizontal: 10,
+
     borderRadius: 8,
   },
 });

@@ -16,6 +16,9 @@ interface DSTVPaymentState {
     error: string | null;
     longMessage: string | null;
     bcardNumber: string | null;
+    MSG_ErrorCode: string | null
+
+    status: "idle" | "loading" | "succeeded" | "failed";
 
 
 }
@@ -32,6 +35,10 @@ const initialState: DSTVPaymentState = {
     error: null,
     longMessage: null,
     bcardNumber: null,
+
+    status: "idle",
+    MSG_ErrorCode: null
+
 };
 
 export const fetchDSTVPayment = createAsyncThunk(
@@ -66,8 +73,8 @@ export const fetchDSTVPayment = createAsyncThunk(
                 shortMessage: response.MSG_ShortMessage,
                 referenceNumber: response.HDR_ReferenceNumber,
                 amount: response.BODY_Amount,
-                bcardNumber: response.BODY_CardNumber || response.CARD_Number || null
-
+                bcardNumber: response.BODY_CardNumber || response.CARD_Number || null,
+                MSG_ErrorCode: response.MSG_ErrorCode
 
             };
         } catch (error: any) {
@@ -99,17 +106,22 @@ const dstvPaymentSlice = createSlice({
         builder
             .addCase(clearDstvPaymentState, () => initialState)
             .addCase(fetchDSTVPayment.pending, (state) => {
+                state.status = "loading";
                 state.loading = true;
                 state.error = null;
             })
             .addCase(fetchDSTVPayment.fulfilled, (state, action) => {
                 state.loading = false;
+                state.status = "succeeded";
                 state.shortMessage = action.payload.shortMessage;
                 state.referenceNumber = action.payload.referenceNumber;
                 state.amount = action.payload.amount;
                 state.bcardNumber = action.payload.bcardNumber;
+                state.MSG_ErrorCode = action.payload.MSG_ErrorCode
+                state.longMessage = action.payload.longMessage
             })
             .addCase(fetchDSTVPayment.rejected, (state, action) => {
+                state.status = "failed";
                 state.loading = false;
                 state.error = action.payload as string;
                 state.longMessage = action.payload as string;

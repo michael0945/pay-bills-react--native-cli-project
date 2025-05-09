@@ -1,210 +1,180 @@
-import React from "react";
+// components/PaymentModal.tsx
+import React from 'react';
 import {
   Modal,
   View,
   Text,
-  ActivityIndicator,
   TouchableOpacity,
-  StyleSheet
-} from "react-native";
+  ActivityIndicator,
+  ScrollView,
+  Image,
+} from 'react-native';
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { useDispatch } from 'react-redux';
+import styles2 from './styles2';
+import styles from './styles';
+import { clearOtpState } from '../../redux/slices/payment/otpSlice';
 
-interface PaymentModalProps {
-  modalVisible: boolean;
-  setModalVisible: (visible: boolean) => void;
+
+// Props
+interface Props {
+  visible: boolean;
   loading: boolean;
   shortMessage?: string;
   longMessage?: string;
   referenceNumber?: string;
   responseAmount?: string;
-  resetForm: () => void;
-
   onClose: () => void;
-  onRetry: () => void;
-  onNewTopup: () => void;
-  onPrintReceipt: () => void;
+  onNewPayment: () => void;
+  onTryAgain: () => void;
+  showReceipt: boolean;
+  reference?: string;
+  amount?: string;
+  accountNumber?: string;
+  subscriberMobile?: string;
+  bcardNumber?: string;
+  handlePrint: () => void;
+  handleShare: () => void;
+  handleCancel: () => void;
 }
 
-
-const PaymentModal: React.FC<PaymentModalProps> = ({
-  modalVisible,
-  setModalVisible,
+const PaymentModal: React.FC<Props> = ({
+  visible,
   loading,
   shortMessage,
   longMessage,
   referenceNumber,
   responseAmount,
-  resetForm
+  onClose,
+  onNewPayment,
+  onTryAgain,
+  showReceipt,
+  reference,
+  amount,
+  accountNumber,
+  subscriberMobile,
+  bcardNumber,
+  handlePrint,
+  handleShare,
+  handleCancel,
 }) => {
+  const dispatch = useDispatch();
+
   return (
-    <Modal transparent={true} visible={modalVisible} animationType="fade">
+    <Modal transparent={true} visible={visible}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          {loading ? (
-            <>
-              <ActivityIndicator size="large" color="blue" />
-              <Text style={styles.loadingText}>Processing Payment...</Text>
-            </>
-          ) : (
-            <>
-              {shortMessage === "Amount not available" ? (
-                <View style={styles.centeredView}>
-                  <Ionicons name="alert-circle" size={80} color="#D81B60" style={styles.icon} />
-                  <Text style={styles.errorTitle}>No Cards Available</Text>
-                  <Text style={styles.errorMessage}>
-                    {longMessage || "Denomination requested not available for PIN-based topup purchase."}
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.actionButton, { backgroundColor: "#007bff" }]}
-                    onPress={() => setModalVisible(false)}
-                  >
-                    <Text style={styles.actionButtonText}>Try Again</Text>
-                    <Ionicons name="arrow-forward" size={20} color="#fff" />
-                  </TouchableOpacity>
+        {loading ? (
+          <View style={styles.modalContainer}>
+            <ActivityIndicator size="large" color="blue" />
+            <Text style={{ textAlign: 'center', marginTop: 10 }}>Processing Payment...</Text>
+          </View>
+        ) : showReceipt ? (
+          <View>
+            <View style={styles.receiptModal}>
+              <ScrollView contentContainerStyle={styles.receiptCard}>
+                <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
+                <Text style={styles.headerText}>MONETA AGENTS (SUPER AGENT)</Text>
+                <Text style={styles.subHeaderText}>ADDIS ABABA</Text>
+                <Text style={styles.subHeaderText}>TRANSACTION RECEIPT</Text>
+
+                <View style={styles.row1}><Text style={styles.label1}>01-05-2025</Text><Text style={styles.value1}>9:24AM</Text></View>
+                <View style={styles.row1}><Text style={styles.label1}>Terminal ID:</Text><Text style={styles.value1}>MICHAELM</Text></View>
+                <View style={styles.row1}><Text style={styles.label1}>Cash Till #:</Text><Text style={styles.value1}>7212401</Text></View>
+                <View style={styles.row1}><Text style={styles.label1}>Cashier:</Text><Text style={styles.value1}>Michaelm</Text></View>
+                <View style={styles.row1}><Text style={styles.label1}>RefNo:</Text><Text style={styles.value1}>{reference}</Text></View>
+                <View style={styles.row1}><Text style={styles.label1}>ConfNo:</Text><Text style={styles.value1}>n/a</Text></View>
+
+                <View style={styles.separator} />
+
+                <View style={styles.row1}><Text style={styles.boldText}>Description</Text><Text style={styles.boldText}>Amount</Text></View>
+                <View style={styles.row1}><Text style={styles.label1}>DSTV payment at Moneta Agents</Text><Text style={styles.value1}>{amount}</Text></View>
+                <View style={styles.row1}><Text style={styles.label1}>(Super Agent) Card:</Text><Text style={styles.value1}>{accountNumber || 'N/A'}</Text></View>
+                <View style={styles.row1}><Text style={styles.label1}>Mob:</Text><Text style={styles.value1}>{subscriberMobile || 'N/A'}</Text></View>
+                <View style={styles.row1}><Text style={styles.label1}>Service Fee</Text><Text style={styles.value1}>7.00</Text></View>
+                <View style={styles.row1}><Text style={styles.label1}>Total Paid</Text><Text style={styles.value1}>{amount}</Text></View>
+
+                <View style={styles.separator} />
+                <Text style={styles.textLine}>{bcardNumber}</Text>
+                <Text style={styles.textLine}>Mobile: +251923782471</Text>
+                <Text style={styles.textLine}>Acct#: *********8216</Text>
+                <Text style={styles.textLine}>Customer: Michael Mengistu Tekle</Text>
+
+                <View style={styles.footer}>
+                  <Image source={require('../../assets/logo.png')} style={styles.footerLogo} />
+                  <Text style={styles.footerText}>Enabling Commerce in the New Service Economy</Text>
                 </View>
-              ) : shortMessage ? (
-                <View style={styles.centeredView}>
-                  <Ionicons name="checkmark-circle" size={80} color="green" style={styles.icon} />
-                  <Text style={styles.successTitle}>{shortMessage}</Text>
-                  <Text style={styles.infoText}>Ref # {referenceNumber}</Text>
-                  <Text style={styles.infoText}>Amount: {responseAmount}</Text>
-                  <View style={styles.buttonContainer}>
-                    <TouchableOpacity
-                      style={styles.actionButton2}
-                      onPress={() => {
-                        resetForm();
-                        setModalVisible(false);
-                      }}
-                    >
-                      <Text style={styles.actionButtonText}>New Topup</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => setModalVisible(false)}
-                    >
-                      <Text style={styles.actionButtonText}>Home Screen</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.actionButton1}
-                    onPress={() => setModalVisible(false)}
-                  >
-                    <Text style={styles.actionButtonText1}>Print Receipt</Text>
-                  </TouchableOpacity>
-                </View>
+              </ScrollView>
+            </View>
+
+            <View style={styles.container3}>
+              <TouchableOpacity style={[styles.button, styles.print]} onPress={handlePrint}>
+                <Ionicons name="print" size={20} color="#fff" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.button, styles.share]} onPress={handleShare}>
+                <Ionicons name="share-social" size={20} color="#fff" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.button, styles.cancel]} onPress={handleCancel}>
+                <Text style={styles.cancelText}>Cancel</Text>
+                <Ionicons name="close" size={16} color="#fff" style={{ marginLeft: 4 }} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : shortMessage ? (
+          <View style={styles.modalContainer1}>
+            <View style={styles.successIconContainer}>
+              <Ionicons name="checkmark-circle" size={80} color="white" />
+            </View>
+            <Text style={styles.amountText1}>{responseAmount}</Text>
+            <Text style={styles.successMessageText}>{shortMessage}</Text>
+            <Text style={styles.refText}>Ref # {referenceNumber}</Text>
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={styles.actionButton2}
+                onPress={() => {
+                  onNewPayment();
+                  dispatch(clearOtpState());
+                }}
+              >
+                <Ionicons name="arrow-forward" size={18} color="white" />
+                <Text style={styles.actionButtonText}>New Topup</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton} onPress={onClose}>
+                <Ionicons name="home-outline" size={18} color="white" />
+                <Text style={styles.actionButtonText}>Home Screen</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.printButton} onPress={onNewPayment}>
+              <Ionicons name="print-outline" size={18} color="black" />
+              <Text style={styles.actionButtonText1}>Print Receipt</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.modalBackground}>
+            <View style={styles.modalContainer2}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="alert-circle" size={60} color="#e60000" />
+              </View>
+              {longMessage ? (
+                <Text style={{ color: 'green', fontSize: 16, marginTop: 10, textAlign: 'center' }}>{longMessage}</Text>
               ) : (
-                <View style={styles.centeredView}>
-                  <Text style={styles.infoText}>Payment Failed</Text>
-                  <TouchableOpacity
-                    onPress={() => setModalVisible(false)}
-                    style={styles.errorButton}
-                  >
-                    <Text style={styles.errorButtonText}>OK</Text>
-                  </TouchableOpacity>
-                </View>
+                <Text style={styles.description}>Something went wrong.</Text>
               )}
-            </>
-          )}
-        </View>
+              <TouchableOpacity style={styles.tryAgainButton} onPress={onTryAgain}>
+                <View style={styles.row}>
+                  <Text style={styles.buttonText}>Try Again</Text>
+                  <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 200 }} />
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </View>
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center"
-  },
-  modalContainer: {
-    width: "80%",
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 10,
-    alignItems: "center"
-  },
-  loadingText: {
-    textAlign: "center",
-    marginTop: 10
-  },
-  centeredView: {
-    alignItems: "center"
-  },
-  icon: {
-    marginBottom: 10
-  },
-  errorTitle: {
-    fontWeight: "bold",
-    fontSize: 18,
-    marginBottom: 10,
-    textAlign: "center",
-    color: "#D81B60"
-  },
-  errorMessage: {
-    textAlign: "center",
-    fontSize: 14,
-    marginBottom: 20
-  },
-  actionButton: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 10,
-    borderRadius: 5,
-    width: "100%"
-  },
-  actionButtonText: {
-    color: "#fff",
-    marginRight: 5
-  },
-  successTitle: {
-    fontWeight: "bold",
-    fontSize: 20,
-    marginBottom: 5,
-    textAlign: "center"
-  },
-  infoText: {
-    textAlign: "center",
-    fontSize: 16,
-    marginBottom: 10
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%"
-  },
-  actionButton2: {
-    backgroundColor: "#28a745",
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    marginRight: 10,
-    alignItems: "center"
-  },
-  actionButton1: {
-    backgroundColor: "#ffc107",
-    padding: 10,
-    marginTop: 10,
-    borderRadius: 5,
-    width: "100%",
-    alignItems: "center"
-  },
-  actionButtonText1: {
-    color: "#000",
-    fontWeight: "bold"
-  },
-  errorButton: {
-    backgroundColor: "red",
-    padding: 10,
-    marginTop: 10,
-    borderRadius: 5
-  },
-  errorButtonText: {
-    color: "white",
-    textAlign: "center"
-  }
-});
 
 export default PaymentModal;

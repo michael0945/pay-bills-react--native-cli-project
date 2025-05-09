@@ -47,6 +47,8 @@ import { AppDispatch } from "../../redux/store";
 import { Image } from "react-native";
 import { Share } from 'react-native';
 import RNPrint from 'react-native-print';
+import DstvModals from "./DstvModal";
+import FontAwesome5Icon from "react-native-vector-icons/FontAwesome5";
 
 
 const schema = z.object({
@@ -56,21 +58,40 @@ const schema = z.object({
 
 const DstvPaymentScreen: React.FC = () => {
     const dispatch: AppDispatch = useDispatch();
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+    // Redux State Selectors
     const dstvState = useSelector((state: RootState) => state.dstv);
     const dstvPayment = useSelector((state: RootState) => state.dstvPayment);
     const dstvCatalog = useSelector((state: RootState) => state.dstvCatalog);
-    const { amount, status } = useSelector((state: RootState) => state.dstvCalculation);
-    const dstvCalculation = useSelector((state: RootState) => state.dstvCalculation)
-    const [calculationTriggered, setCalculationTriggered] = useState(false);
     const dstvCatalogPayment = useSelector((state: RootState) => state.dstvCatalogPayment);
-    const [selectedPackage, setSelectedPackage] = useState<string | null>("Gojo");
+    const dstvCalculation = useSelector((state: RootState) => state.dstvCalculation);
+    const { amount, status } = dstvCalculation;
+    const bcardNumber = dstvPayment.bcardNumber;
+
+    // Local State
+    const [modalVisible, setModalVisible] = useState(false);
     const [showReceipt, setShowReceipt] = useState(false);
     const [isPickerVisible, setIsPickerVisible] = useState(false);
     const [calcModalVisible, setCalcModalVisible] = useState(false);
+    const [calculationTriggered, setCalculationTriggered] = useState(false);
+    const [selectedPackage, setSelectedPackage] = useState<string | null>('Gojo');
+    const [selectedPeriod, setSelectedPeriod] = useState("1");
 
-    const bcardNumber = useSelector((state: RootState) => state.dstvPayment.bcardNumber);
+    const [selectedProduct, setSelectedProduct] = useState<{
+        ProductCode: string;
+        MonthlyPrice: string;
+        YearlyPrice: string;
+    } | null>(() => {
+        const gojoPackage = dstvCatalog.catalog.find(item => item.Product === "Gojo");
+        return gojoPackage ? {
+            ProductCode: gojoPackage.ProductCode,
+            MonthlyPrice: gojoPackage.MonthlyPrice,
+            YearlyPrice: gojoPackage.YearlyPrice
+        } : null;
+    });
 
-    const [selectedProduct, setSelectedProduct] = useState<{ ProductCode: string; label: string } | null>(null);
+    // Form
     const {
         control,
         handleSubmit,
@@ -78,37 +99,72 @@ const DstvPaymentScreen: React.FC = () => {
         watch,
         formState: { errors },
     } = useForm({
-        resolver: zodResolver(schema), defaultValues: {
+        resolver: zodResolver(schema),
+        defaultValues: {
             subscriberMobile: '',
             accountNumber: '',
         },
     });
+
     const subscriberMobile = watch('subscriberMobile');
-    const accountNumber = watch('accountNumber')
-    const [modalVisible, setModalVisible] = useState(false);
-    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    const [selectedPeriod, setSelectedPeriod] = useState("1");
+    const accountNumber = watch('accountNumber');
+
+    // useEffect: Initialize Gojo package if needed
+    useEffect(() => {
+        if (dstvCatalog.catalog.length > 0 && !selectedProduct) {
+            const gojoPackage = dstvCatalog.catalog.find(item => item.Product === "Gojo");
+            if (gojoPackage) {
+                const product = {
+                    ProductCode: gojoPackage.ProductCode,
+                    MonthlyPrice: gojoPackage.MonthlyPrice,
+                    YearlyPrice: gojoPackage.YearlyPrice,
+                };
+                setSelectedProduct(product);
+                dispatch(setProductCode(product.ProductCode));
+                dispatch(setAmountDueC(product.MonthlyPrice));
+            }
+        }
+    }, [dstvCatalog.catalog]);
+
+    // Handle Package Selection
+    const handlePackageSelect = (item: CatalogItem) => {
+        setSelectedPackage(item.Product);
+        setSelectedProduct({
+            ProductCode: item.ProductCode,
+            MonthlyPrice: item.MonthlyPrice,
+            YearlyPrice: item.YearlyPrice
+        });
+        dispatch(setProductCode(item.ProductCode));
+        dispatch(setAmountDueC(item.MonthlyPrice));
+    };
+
+    // Get Customer Bill
     const handleGetCustomerBill = (data: any) => {
         dispatch(clearDSTVCatalog());
         dispatch(fetchDSTVData(data.accountNumber));
     };
+
+    // Fetch DSTV Catalog
     const handleFetchCatalog = () => {
         dispatch(clearDSTVState());
         dispatch(fetchDstvCatalog());
     };
+
+    //  Handle Payment
     const handlePayment = () => {
         dispatch(fetchDSTVPayment());
-
         setModalVisible(true);
     };
+
     const handlePaymentC = () => {
         console.log("Selected Package:", dstvCatalogPayment.vendorAccountC);
         console.log("Selected Amount:", dstvCatalogPayment.amountDueC);
         console.log("Selected Product:", dstvCatalogPayment.productCode);
         dispatch(fetchDSTVCatalogPayment());
-
         setModalVisible(true);
     };
+
+    // After Payment
     const handleOkay = () => {
         setModalVisible(false);
         reset();
@@ -118,33 +174,36 @@ const DstvPaymentScreen: React.FC = () => {
         dispatch(clearDstvPaymentState());
         dispatch(cleardstvCatalogPaymentState());
         setCalculationTriggered(false);
-
     };
+
+    // 🔄 Set amount from dstvState if payment data succeeds
     useEffect(() => {
         if (dstvState.status === "succeeded" && dstvState.amountDue) {
             dispatch(setAmountDue(dstvState.amountDue.toString()));
         }
     }, [dstvState.status, dstvState.amountDue]);
-    // // Clear everything on screen blur/unfocus
 
-    // useFocusEffect(
-    //     useCallback(() => {
-    //         return () => {
-    //             dispatch(clearDSTVState());
-    //             dispatch(clearDSTVCatalog());
-    //             reset();
-    //         };
-    //     }, [])
-    // );
+    // Clear everything on screen blur/unfocus
+    useFocusEffect(
+        useCallback(() => {
+            return () => {
+                dispatch(clearDSTVState());
+                dispatch(clearDSTVCatalog());
+                reset();
+            };
+        }, [])
+    );
+
+    // Navigation
     const handleGoHome = () => {
+        handleCancel()
         navigation.navigate("Home");
     };
 
+    // Receipt Printing
     const handlePrintReceipt = () => {
         setShowReceipt(true);
-
-    }
-
+    };
     const htmlContent = `
           <html>
             <head>
@@ -271,152 +330,26 @@ const DstvPaymentScreen: React.FC = () => {
 
 
     const handleCalculateAmount = () => {
-        console.log('Selected Product:', selectedProduct);
-        console.log('Selected Period:', selectedPeriod);
-        if (!selectedProduct) return;
+        if (!selectedProduct) {
+            Alert.alert("Error", "Please select a package first");
+            return;
+        }
+
+        if (!selectedPeriod) {
+            Alert.alert("Error", "Please select a payment period");
+            return;
+        }
 
         const info2 = selectedProduct.ProductCode;
         const info3 = selectedPeriod;
 
         dispatch(setInfo2(info2));
         dispatch(setInfo3(info3));
-        dispatch(fetchDstvCalculation({ info2, info3 }))
+        dispatch(fetchDstvCalculation({ info2, info3 }));
         setCalcModalVisible(true);
         setCalculationTriggered(true);
     };
-    const renderModalContent = () => {
-        if (dstvPayment.loading || dstvCatalogPayment.loading) {
-            return renderLoading();
-        }
 
-        if (dstvPayment.error) {
-            return renderError(dstvPayment.error);
-        }
-
-        if (dstvPayment.shortMessage) {
-            return renderSuccess(
-                dstvPayment.amount,
-                dstvPayment.shortMessage,
-                dstvPayment.referenceNumber,
-                dstvPayment.bcardNumber
-            );
-        }
-
-        if (dstvCatalogPayment.status === "succeeded") {
-            return renderSuccess(
-                dstvCatalogPayment.amount,
-                dstvCatalogPayment.shortMessage,
-                dstvCatalogPayment.referenceNumber
-            );
-        }
-
-        return null;
-    };
-
-    const renderLoading = () => (
-        <View style={styles.modalContainer3}>
-            <ActivityIndicator size="large" color="#015CB7" />
-            <Text style={styles.modalText}>Processing Payment...</Text>
-        </View>
-    );
-
-    const renderError = (errorMessage: string) => (
-        <View style={styles.modalContainer3}>
-            <Ionicons name="close-circle-outline" size={48} color="red" />
-            <Text style={styles.modalText}>Payment Failed</Text>
-            <Text style={styles.modalSubText}>{errorMessage}</Text>
-        </View>
-    );
-
-    const renderSuccess = (amount: string, message: string, reference: string, bcardNumber: string) => (
-        showReceipt ? (
-            <View >
-
-
-                <View style={styles.receiptModal}>
-                    <ScrollView contentContainerStyle={styles.receiptCard}>
-                        <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
-                        <Text style={styles.headerText}>MONETA AGENTS (SUPER AGENT)</Text>
-                        <Text style={styles.subHeaderText}>ADDIS ABABA</Text>
-                        <Text style={styles.subHeaderText}>TRANSACTION RECEIPT</Text>
-
-                        <View style={styles.row1}><Text style={styles.label1}>01-05-2025</Text><Text style={styles.value1}>9:24AM</Text></View>
-                        <View style={styles.row1}><Text style={styles.label1}>Terminal ID:</Text><Text style={styles.value1}>MICHAELM</Text></View>
-                        <View style={styles.row1}><Text style={styles.label1}>Cash Till #:</Text><Text style={styles.value1}>7212401</Text></View>
-                        <View style={styles.row1}><Text style={styles.label1}>Cashier:</Text><Text style={styles.value1}>Michaelm</Text></View>
-                        <View style={styles.row1}><Text style={styles.label1}>RefNo:</Text><Text style={styles.value1}>{reference}</Text></View>
-                        <View style={styles.row1}><Text style={styles.label1}>ConfNo:</Text><Text style={styles.value1}>n/a</Text></View>
-
-                        <View style={styles.separator} />
-
-                        <View style={styles.row1}><Text style={styles.boldText}>Description</Text><Text style={styles.boldText}>Amount</Text></View>
-                        <View style={styles.row1}><Text style={styles.label1}>DSTV payment at Moneta Agents</Text><Text style={styles.value1}>{amount}</Text></View>
-                        <View style={styles.row1}><Text style={styles.label1}>(Super Agent) Card:</Text><Text style={styles.value1}>{accountNumber || 'N/A'}</Text></View>
-                        <View style={styles.row1}><Text style={styles.label1}>Mob:</Text><Text style={styles.value1}>{subscriberMobile || 'N/A'}</Text></View>
-                        <View style={styles.row1}><Text style={styles.label1}>Service Fee</Text><Text style={styles.value1}>7.00</Text></View>
-                        <View style={styles.row1}><Text style={styles.label1}>Total Paid</Text><Text style={styles.value1}>{amount}</Text></View>
-
-                        <View style={styles.separator} />
-                        <Text style={styles.textLine}>{bcardNumber}</Text>
-                        <Text style={styles.textLine}>Mobile: +251923782471</Text>
-                        <Text style={styles.textLine}>Acct#: *********8216</Text>
-                        <Text style={styles.textLine}>Customer: Michael Mengistu Tekle</Text>
-
-                        <View style={styles.footer}>
-                            <Image source={require('../../assets/logo.png')} style={styles.footerLogo} />
-                            <Text style={styles.footerText}>Enabling Commerce in the New Service Economy</Text>
-                        </View>
-                    </ScrollView>
-
-                </View>
-
-
-                <View style={styles.container3}>
-                    <TouchableOpacity style={[styles.button, styles.print]} onPress={handlePrint}>
-                        <Ionicons name="print" size={20} color="#fff" />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.button, styles.share]} onPress={handleShare}>
-                        <Ionicons name="share-social" size={20} color="#fff" />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.button, styles.cancel]} onPress={handleCancel}>
-                        <Text style={styles.cancelText}>Cancel</Text>
-                        <Ionicons name="close" size={16} color="#fff" style={{ marginLeft: 4 }} />
-                    </TouchableOpacity>
-                </View>
-
-
-            </View>
-
-        ) : (
-            <View style={styles.modalContainer2}>
-                <View style={styles.successIconContainer}>
-                    <Ionicons name="checkmark-circle" size={80} color="white" />
-                </View>
-                <Text style={styles.amountText}>{amount}</Text>
-                <Text style={styles.successMessageText}>{message}</Text>
-                <Text style={styles.refText}>Ref # {reference}</Text>
-
-                <View style={styles.buttonRow}>
-                    <TouchableOpacity style={styles.newPaymentButton} onPress={handleOkay}>
-                        <Ionicons name="arrow-forward" size={18} color="white" />
-                        <Text style={styles.buttonText}>New DStv Payment</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.homeButton} onPress={handleGoHome}>
-                        <Ionicons name="home-outline" size={18} color="white" />
-                        <Text style={styles.buttonText}>Home Screen</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <TouchableOpacity style={styles.printButton} onPress={handlePrintReceipt}>
-                    <Ionicons name="print-outline" size={18} color="black" />
-                    <Text style={styles.printButtonText}>Print Receipt</Text>
-                </TouchableOpacity>
-            </View>
-        )
-    );
 
 
 
@@ -444,6 +377,7 @@ const DstvPaymentScreen: React.FC = () => {
                                         dispatch(setVendorAccount(text));
                                         dispatch(setVendorAccountC(text));
 
+
                                     }}
                                     keyboardType="numeric"
                                 />
@@ -454,7 +388,7 @@ const DstvPaymentScreen: React.FC = () => {
 
                     <Text style={styles.label}>Subscriber Mobile</Text>
                     <View style={styles.inputContainer}>
-                        <Ionicons name="call-outline" size={18} color="#b0b0b0" style={styles.icon} />
+                        <FontAwesome5Icon name="mobile-alt" size={18} color="#b0b0b0" style={styles.icon} />
                         <Controller
                             control={control}
                             name="subscriberMobile"
@@ -486,151 +420,108 @@ const DstvPaymentScreen: React.FC = () => {
                 </TouchableOpacity>
 
                 {/* Lookup Loading Modal */}
-                <Modal visible={dstvState.status === "loading"} transparent animationType="fade">
-                    <View style={styles.modalBackground}>
-                        <View style={styles.modalContainer}>
-                            <ActivityIndicator size="large" color="#015CB7" />
-                            <Text style={styles.modalText}>Processing</Text>
-                            <Text style={styles.modalSubText}>Looking up bill...</Text>
-                        </View>
-                    </View>
-                </Modal>
+
 
                 {/* Bill Result */}
 
 
-                <Modal visible={dstvState.status === "failed"} transparent animationType="fade">
-                    <View style={styles.modalBackground}>
-                        <View style={styles.modalContainer2}>
-                            <View style={styles.iconContainer}>
-                                <Ionicons name="alert-circle" size={60} color="#e60000" />
-                            </View>
-                            <Text style={styles.errorTitle}>Invalid Card Num</Text>
-                            <Text style={styles.description}>
-                                {dstvState.longMessage || "The DSTV Smart Card Number provided is invalid. It must be a 10-digit number."}
-                            </Text>
 
-                            <TouchableOpacity style={styles.tryAgainButton} onPress={handleOkay} >
-                                <View style={styles.row}>
-                                    <Text style={styles.buttonText}>Try Again</Text>
-                                    <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 200 }} />
-                                </View>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </Modal>
-
-                {/* Catalog Modal */}
-                <Modal visible={dstvCatalog.loading} transparent animationType="fade">
-                    <View style={styles.modalBackground}>
-                        <View style={styles.modalContainer}>
-                            <ActivityIndicator size="large" color="#015CB7" />
-                            <Text style={styles.modalText}>Fetching Packages...</Text>
-                        </View>
-                    </View>
-                </Modal>
-
-                <Modal visible={dstvCalculation.status === "loading"} transparent animationType="fade">
-                    <View style={styles.modalBackground}>
-                        <View style={styles.modalContainer}>
-                            <ActivityIndicator size="large" color="#015CB7" />
-                            <Text style={styles.modalText}>Processing...</Text>
-                        </View>
-                    </View>
-                </Modal>
 
 
                 {/* DSTV Package Selection */}
+                {dstvCalculation.status === "succeeded" ? (
+                    <>
+                        {/* Calculation Confirmation Modal */}
+                        <Modal
+                            animationType="slide"
+                            transparent={true}
+                            visible={calcModalVisible}
+                            onRequestClose={() => setCalcModalVisible(false)}
+                        >
+                            <View style={styles.modalOverlay1}>
+                                <View style={styles.modalContainer1}>
+                                    <Text style={styles.header}>DStv Payment Confirmation</Text>
 
+                                    {/* Account Details */}
+                                    <View style={styles.row}>
+                                        <Text style={styles.label}>Account Number</Text>
+                                        <Text style={styles.value}>{accountNumber || 'N/A'}</Text>
+                                    </View>
 
-                <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={calcModalVisible}
-                    onRequestClose={() => setCalcModalVisible(false)}
-                >
-                    <View style={styles.modalOverlay1}>
-                        <View style={styles.modalContainer1}>
-                            <Text style={styles.header}>DStv Payment Confirmation</Text>
+                                    <View style={styles.row}>
+                                        <Text style={styles.label1}>Subscriber Mobile</Text>
+                                        <Text style={styles.value}>{subscriberMobile || 'N/A'}</Text>
+                                    </View>
 
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Account Number</Text>
-                                <Text style={styles.value}>{accountNumber || 'N/A'}</Text>
+                                    {/* Payment Details */}
+                                    <View style={styles.row}>
+                                        <Text style={styles.label1}>Package Amount</Text>
+                                        <Text style={styles.value}>
+                                            {selectedProduct?.MonthlyPrice || 'N/A'} ETB
+                                        </Text>
+                                    </View>
+
+                                    <View style={styles.row}>
+                                        <Text style={styles.label1}>Selected Period</Text>
+                                        <Text style={styles.value}>
+                                            {selectedPeriod} Month(s)
+                                        </Text>
+                                    </View>
+
+                                    <View style={styles.row}>
+                                        <Text style={styles.label1}>Payment Amount</Text>
+                                        <Text style={styles.value}>
+                                            {amount || 'N/A'} ETB
+                                        </Text>
+                                    </View>
+
+                                    {/* Fees and Total */}
+                                    <View style={styles.row}>
+                                        <Text style={styles.label1}>Service Fee</Text>
+                                        <Text style={styles.value}>7.00 ETB</Text>
+                                    </View>
+
+                                    <View style={styles.rowTotal}>
+                                        <Text style={styles.totalLabel}>Total Amount</Text>
+                                        <Text style={styles.totalValue}>
+                                            {amount ? `${amount} ETB` : 'N/A'}
+                                        </Text>
+                                    </View>
+
+                                    {/* Action Buttons */}
+                                    <TouchableOpacity
+                                        style={styles.continueButton}
+                                        onPress={() => {
+                                            if (amount) {
+                                                dispatch(setAmountDueC(amount));
+                                                setCalcModalVisible(false);
+                                            }
+                                        }}
+                                    >
+                                        <Text style={styles.continueText}>Confirm Payment</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={styles.cancelButton}
+                                        onPress={() => setCalcModalVisible(false)}
+                                    >
+                                        <Text style={styles.cancelText}>Cancel</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
+                        </Modal>
+                    </>
+                )
 
-                            <View style={styles.row}>
-                                <Text style={styles.label1}>Subscriber Mobile</Text>
-                                <Text style={styles.value}>{subscriberMobile || 'N/A'}</Text>
-                            </View>
-
-                            <View style={styles.row}>
-                                <Text style={styles.label1}>Package Amount</Text>
-                                <Text style={styles.value}>{'N/A'}</Text>
-                            </View>
-
-                            <View style={styles.row}>
-                                <Text style={styles.label1}>Exchange Rate</Text>
-                                <Text style={styles.value}>{'N/A'}</Text>
-                            </View>
-
-                            <View style={styles.row}>
-                                <Text style={styles.label1}>Payment Amount</Text>
-                                <Text style={styles.value}>{dstvCatalogPayment.amountDueC}</Text>
-                            </View>
-
-                            <View style={styles.row}>
-                                <Text style={styles.label1}>Admin Fee</Text>
-                                <Text style={styles.value}>{'N/A'}</Text>
-                            </View>
-
-                            <View style={styles.row}>
-                                <Text style={styles.label1}>Subtotal Amount</Text>
-                                <Text style={styles.value}>{'N/A'}</Text>
-                            </View>
-
-                            <View style={styles.row}>
-                                <Text style={styles.label1}>VAT</Text>
-                                <Text style={styles.value}>{'N/A'}</Text>
-                            </View>
-
-                            <View style={styles.row}>
-                                <Text style={styles.label1}>Service Fee</Text>
-                                <Text style={styles.value}>7.00 ETB</Text>
-                            </View>
-
-                            <View style={styles.rowTotal}>
-                                <Text style={styles.totalLabel}>Total</Text>
-                                <Text style={styles.totalValue}>
-                                    <Text>Amount: {amount} ETB</Text>
-                                </Text>
-                            </View>
-
-                            {/* ✅ Adjusted Continue Button */}
-                            <TouchableOpacity
-                                style={styles.continueButton}
-                                onPress={() => {
-                                    dispatch(setAmountDueC(amount ?? ""));
-                                    setCalcModalVisible(false);
-                                }}
-                            >
-                                <Text style={styles.continueText}>Continue</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </Modal>
+                    : null}
 
 
 
 
-                {/* Payment Modal */}
 
-                {/* )} */}
-                {/* Payment Modal */}
-                <Modal visible={modalVisible} transparent animationType="fade">
-                    <View style={styles.modalBackground}>
-                        {renderModalContent()}
-                    </View>
-                </Modal>
+
+
+
 
             </View>
             {dstvState.status === "succeeded" && (
@@ -648,7 +539,7 @@ const DstvPaymentScreen: React.FC = () => {
             {dstvCatalog.catalog.length > 0 && (
                 <View style={[
                     styles.amountUICatalog,
-                    dstvCatalog.status === "succeeded" && { elevation: 3 } // apply elevation only when succeeded
+                    dstvCatalog.status === "succeeded" && { elevation: 3 }
                 ]}>
                     <View style={styles.responseContainer}>
                         <Text style={styles.sectionTitle}>Packages</Text>
@@ -660,12 +551,7 @@ const DstvPaymentScreen: React.FC = () => {
                                         styles.packageButton,
                                         selectedPackage === item.Product && styles.packageButtonSelected,
                                     ]}
-                                    onPress={() => {
-                                        setSelectedPackage(item.Product);
-                                        dispatch(setProductCode(item.ProductCode));
-                                        dispatch(setAmountDueC(item.MonthlyPrice));
-                                        setSelectedProduct({ ProductCode: item.ProductCode, label: item.Product });
-                                    }}
+                                    onPress={() => handlePackageSelect(item)}
                                 >
                                     <Text
                                         style={[
@@ -720,7 +606,7 @@ const DstvPaymentScreen: React.FC = () => {
                 //         </TouchableOpacity>
                 //     </>
                 // )
-                : dstvCatalog.shortMessage === "Success" ? (
+                : dstvCatalog.shortMessage === "succeeded" ? (
                     <Text style={styles.errorText}>{dstvCatalog.shortMessage}</Text>
                 ) : calculationTriggered && dstvCalculation.status === "succeeded" ? (
                     <>
@@ -730,6 +616,19 @@ const DstvPaymentScreen: React.FC = () => {
                         </TouchableOpacity>
                     </>
                 ) : null}
+
+            <DstvModals
+                showReceipt={showReceipt}
+                subscriberMobile={subscriberMobile}
+                accountNumber={accountNumber}
+                handlePrint={handlePrint}
+                handleShare={handleShare}
+                handleCancel={handleCancel}
+                handleOkay={handleOkay}
+                handleGoHome={handleGoHome}
+                handlePrintReceipt={handlePrintReceipt}
+                selectedPackage={selectedPackage ?? undefined}
+            />
         </ScrollView>
     );
 };

@@ -179,7 +179,7 @@ const OTP = () => {
                     <TextInput
                         style={styles.input}
                         placeholder="Account/Card Number"
-                        keyboardType="default"
+                        keyboardType="number-pad"
                         onChangeText={handleChange}
 
                     />

@@ -9,8 +9,10 @@ import {
     Modal,
     ActivityIndicator,
     Dimensions,
+    Alert,
+    Share,
 } from "react-native";
-
+import { z } from "zod";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../redux/store";
@@ -25,6 +27,11 @@ import {
 import OTP from "./OTP";
 import { RootStackParamList } from "../../navigation/types";
 import { clearDerashPaymentState, fetchDerashPayment, setAmountD, setVendorAccountD } from "../../redux/derashPaymentSlice";
+import DstvModals from "./DstvModal";
+import { clearOtpState } from "../../redux/slices/payment/otpSlice";
+import { clearPaymentState } from "../../redux/paymentSlice";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 const { width } = Dimensions.get("window");
 
 
@@ -33,6 +40,32 @@ const BillAggrigator: React.FC = () => {
     const derashPayment = useSelector((state: RootState) => state.derashPayment)
     const [errorModalVisible, setErrorModalVisible] = useState(false);
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    const [showReceipt, setShowReceipt] = useState(false);
+    const DcardNumber = useSelector((state: RootState) => state.derashPayment.DcardNumber)
+
+
+    const schema = z.object({
+        subscriberMobile: z.string().min(10, "Mobile number must be at least 10 characters"),
+        accountNumber: z.string().min(1, "Account number is required"),
+        DaccountNumber: z.string().min(1, ""),
+    });
+
+    const {
+        control,
+        handleSubmit,
+        reset,
+        watch,
+        formState: { errors },
+    } = useForm({
+        resolver: zodResolver(schema),
+        defaultValues: {
+            subscriberMobile: '',
+            DaccountNumber: '',
+        },
+    });
+
+
+    const DaccountNumber = watch('DaccountNumber');
 
 
     const {
@@ -116,18 +149,62 @@ const BillAggrigator: React.FC = () => {
         dispatch(clearBilllookupState());
 
     };
+    const handlePrintReceipt = () => {
+        setShowReceipt(true);
+    };
+    const handlePrint = async () => {
+        console.log("hello")
+    };
+
+    const handleShare = async () => {
+        try {
+            const result = await Share.share({
+                message: `DSTV Payment Receipt\n
+                        Amount: ${aggrigator.amount}\n
+                        Reference: ${aggrigator.referenceNumber}\n
+                        Date: ${new Date().toLocaleString()}`,
+                title: 'DSTV Payment Receipt'
+            });
+
+            if (result.action === Share.sharedAction) {
+                if (result.activityType) {
+                    console.log('Shared with activity type:', result.activityType);
+                }
+            }
+        } catch (error) {
+            Alert.alert('Share Error', 'Failed to share receipt');
+        }
+    };
+    const handleCancel = () => {
+
+        setShowReceipt(false);
+        setModalVisible(false);
+        dispatch(clearOtpState());
+        dispatch(clearDerashPaymentState())
+        dispatch(clearBilllookupState())
+
+
+    };
     return (
         <View>
             <View style={styles.container}>
                 <View style={styles.inputContainer}>
+                    <Controller
+                        control={control}
+                        name="DaccountNumber"
+                        render={({ field: { onChange, value } }) => (
 
-                    <TextInput
-                        placeholder="Enter Bill ID"
-                        style={styles.input}
-                        value={billID}
-                        keyboardType="numeric"
-                        onChangeText={handleChange}
+                            <TextInput
+
+                                placeholder="Enter Bill ID"
+                                style={styles.input}
+                                value={billID}
+                                keyboardType="numeric"
+                                onChangeText={handleChange}
+                            />
+                        )}
                     />
+
                     <TouchableOpacity
                         style={styles.searchButton}
                         onPress={handleSearch}
@@ -137,15 +214,7 @@ const BillAggrigator: React.FC = () => {
                 </View>
 
 
-                {/* Loading Modal */}
-                <Modal visible={loading} transparent animationType="fade">
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContainer}>
-                            <ActivityIndicator size="large" color="#0057b3" />
-                            <Text style={styles.modalText}>Processing Payment...</Text>
-                        </View>
-                    </View>
-                </Modal>
+
 
                 {/* Success Result */}
                 {!loading && longMessage && (
@@ -165,34 +234,20 @@ const BillAggrigator: React.FC = () => {
                 )}
 
 
-                {/* Error Modal */}
-                <Modal
-                    visible={errorModalVisible}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={() => setErrorModalVisible(false)}
-                >
-                    <View style={styles.modalBackground}>
-                        <View style={styles.modalContainer2}>
-                            <View style={styles.iconContainer}>
-                                <Ionicons name="alert-circle" size={60} color="#e60000" />
-                            </View>
-                            <Text style={styles.errorTitle}>Invalid Card Num</Text>
-                            <Text style={[styles.modalText, { color: "red" }]}>
-                                {error || "Smart Card Number provided is invalid. It must be a 10-digit number."}
-                            </Text>
-                            <TouchableOpacity
-                                style={styles.tryAgainButton}
-                                onPress={() => setErrorModalVisible(false)}
-                            >
-                                <View style={styles.row}>
-                                    <Text style={styles.buttonText}>Try Again</Text>
-                                    <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 200 }} />
-                                </View>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </Modal>
+                <DstvModals
+                    showReceipt={showReceipt}
+
+                    DaccountNumber={DaccountNumber || undefined}
+                    handlePrint={handlePrint}
+                    handleShare={handleShare}
+                    handleCancel={handleCancel}
+                    handleOkay={handleOkay}
+                    handleGoHome={handleGoHome}
+                    handlePrintReceipt={handlePrintReceipt}
+
+                />
+
+
 
             </View>
             {aggrigator.status === "succeeded" ? (
@@ -205,49 +260,7 @@ const BillAggrigator: React.FC = () => {
             )
 
                 : null}
-            <Modal visible={modalVisible} transparent animationType="fade">
-                <View style={styles.modalBackground}>
-                    {derashPayment.loading ? (
-                        <View style={styles.modalContainer3}>
-                            <ActivityIndicator size="large" color="#015CB7" />
-                            <Text style={styles.modalText}>Processing Payment...</Text>
-                        </View>
-                    ) : derashPayment.error ? (
-                        <View style={styles.modalContainer3}>
-                            <Ionicons name="close-circle-outline" size={48} color="red" />
-                            <Text style={styles.modalText}>Payment Failed</Text>
-                            <Text style={styles.modalSubText}>{derashPayment.error}</Text>
-                        </View>
-                    ) : derashPayment.shortMessage ? (
-                        <View style={styles.modalContainer2}>
-                            <View style={styles.successIconContainer}>
-                                <Ionicons name="checkmark-circle" size={80} color="white" />
-                            </View>
-                            <Text style={styles.amountText}>{derashPayment.amount}</Text>
-                            <Text style={styles.successMessageText}>{derashPayment.shortMessage}</Text>
-                            <Text style={styles.refText}>Ref # {derashPayment.referenceNumber}</Text>
 
-                            <View style={styles.buttonRow}>
-                                <TouchableOpacity style={styles.newPaymentButton} onPress={handleOkay}>
-                                    <Ionicons name="arrow-forward" size={18} color="white" />
-                                    <Text style={styles.buttonText}>New DStv Payment</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.homeButton} onPress={handleGoHome}>
-                                    <Ionicons name="home-outline" size={18} color="white" />
-                                    <Text style={styles.buttonText}>Home Screen</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            <TouchableOpacity style={styles.printButton}>
-                                <Ionicons name="print-outline" size={18} color="black" />
-                                <Text style={styles.printButtonText}>Print Receipt</Text>
-                            </TouchableOpacity>
-                        </View>
-                    ) :
-                        null}
-                </View>
-            </Modal>
         </View>
 
     );
@@ -260,8 +273,9 @@ const styles = StyleSheet.create({
         alignItems: "center",
         flex: 1,
         padding: 20,
-
+        borderRadius: 10,
         backgroundColor: "#fff",
+        elevation: 4
     },
     inputContainer: {
         flexDirection: "row",
@@ -344,14 +358,18 @@ const styles = StyleSheet.create({
     },
     submitButton: {
         backgroundColor: "#015CB7",
-        paddingVertical: 16,
-        paddingHorizontal: 24,
+        paddingVertical: 20,
         borderRadius: 5,
         alignItems: "center",
-        marginTop: 20,
-        marginBottom: 20,
-        width: "100%",
-        padding: 10,
+        marginVertical: 20,
+        marginHorizontal: 15,
+        elevation: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        minHeight: 50,
+        width: "90%",
     },
     submitText: {
         color: "#fff",

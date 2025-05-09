@@ -8,7 +8,7 @@ const styles = StyleSheet.create({
     amountUI: { borderRadius: 10, marginTop: 5, marginBottom: -7, padding: 15, },
     amountUICatalog: { borderRadius: 10, marginTop: 7, paddingTop: 2, marginBottom: -7, padding: 15, backgroundColor: "#ffffff", },
     receiptModal: {
-        padding: 20,
+        padding: 10,
         backgroundColor: '#fff',
         alignItems: 'center',
         justifyContent: 'center',
@@ -20,8 +20,8 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
-        marginLeft: 15,
-        marginRight: 15,
+        marginLeft: 20,
+        marginRight: 20,
         marginTop: 30,
         marginBottom: -15,
 
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 10,
         elevation: 3,
-        padding: 1,
+        padding: 10,
         alignItems: 'flex-start',
 
         alignContent: 'center',
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
 
         flexDirection: 'row',
 
-        gap: 8,
+        gap: 10,
         padding: 10,
         justifyContent: 'center',
         alignItems: 'center',
@@ -64,21 +64,22 @@ const styles = StyleSheet.create({
     },
     print: {
         backgroundColor: '#007bff',
-        paddingHorizontal: 30,
+        paddingHorizontal: 40,
         paddingVertical: 20,
 
         marginTop: 10,
         marginBottom: 10,
 
-        marginRight: 40,
+
 
     },
     share: {
         backgroundColor: '#28a745',
-        paddingHorizontal: 30,
+        paddingHorizontal: 40,
         paddingVertical: 20,
         marginBottom: 10,
-        marginLeft: -30,
+
+
 
     },
     cancel: {
@@ -127,12 +128,14 @@ const styles = StyleSheet.create({
     },
     footer: {
         alignItems: 'center',
-        marginTop: 20,
+        marginTop: 30,
     },
     footerLogo: {
-        width: 60,
+        width: 90,
         height: 20,
-        marginBottom: 4,
+        marginBottom: 10,
+        paddingBottom: 15,
+        paddingTop: 4
     },
     footerText: {
         fontSize: 11,
@@ -147,6 +150,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 0.5,
         borderBottomColor: '#ccc',
         width: '100%',
+
     },
     label1: {
         fontSize: 14,
@@ -199,7 +203,7 @@ const styles = StyleSheet.create({
 
     },
     // buttonText: { color: "white", fontSize: 16, fontWeight: "bold" },
-    errorText: { color: "red", fontSize: 14, marginTop: 5 },
+    errorText: { color: "red", fontSize: 13, marginTop: -3, marginBottom: 10 },
     responseContainer: {
         marginTop: 20,
         padding: 15,
@@ -221,7 +225,8 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 4,
         minHeight: 50,
-        width: "90%",
+        width: "92.4%",
+
 
     },
     submitText: {
@@ -562,7 +567,7 @@ const styles = StyleSheet.create({
         color: '#555',
     },
     tryAgainButton: {
-        marginTop: 30,
+        marginTop: 70,
         flexDirection: 'row',
         backgroundColor: '#0066cc',
         paddingVertical: 20,
@@ -571,6 +576,7 @@ const styles = StyleSheet.create({
         width: '116%',
         alignItems: 'center',
         justifyContent: 'center',
+
     },
 
     loadingText: {

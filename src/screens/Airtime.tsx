@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { use, useCallback, useState } from "react";
 import {
     View,
     Text,
@@ -11,7 +11,9 @@ import {
     KeyboardAvoidingView,
     Platform,
     Dimensions,
-    SafeAreaView
+    SafeAreaView,
+    Share,
+    Alert
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../redux/store";
@@ -26,16 +28,27 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import OTP from "./OTP";
 import { z } from "zod";
 import { clearOtpState } from "../../redux/slices/payment/otpSlice";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import DstvModals from "./DstvModal";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../../navigation/types";
+import { watchFolders } from "../../metro.config";
+import FontAwesome5Icon from "react-native-vector-icons/FontAwesome5";
+import { clearDstvPaymentState } from "../../redux/dstvPaymentSlice";
+import { cleardstvCatalogPaymentState } from "../../redux/dstvCatalogPaymentSlice";
+import { clearDerashPaymentState } from "../../redux/derashPaymentSlice";
+
+
 
 const { width, height } = Dimensions.get("window");
 
 // Define Zod schema
 const airtimeSchema = z.object({
+
     mobileNumber: z.string()
         .min(9, "Mobile number must be at least 9 digits")
         .max(15, "Mobile number must be at most 15 digits")
-        .regex(/^\d+$/, "Mobile number must contain only numbers"),
+        .regex(/^\d+$/, "Subscriber Mobile is required"),
     amount: z.string()
         .regex(/^\d+$/, "Amount must be a number")
         .refine(val => parseInt(val) >= 50 && parseInt(val) <= 1000, {
@@ -48,10 +61,13 @@ const AirtimeScreen = () => {
     const [selectedAmount, setSelectedAmount] = useState<number>(25);
     const [customAmount, setCustomAmount] = useState<string>("");
     const [modalVisible, setModalVisible] = useState(false);
+    const [showReceipt, setShowReceipt] = useState(false);
     const [errors, setErrors] = useState<{ mobileNumber?: string; amount?: string }>({});
-
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    const isPin = selectedTopup === "PIN";
     const amounts = [25, 50, 100, 250, 500, 1000];
     const dispatch = useDispatch<AppDispatch>();
+    const [formResetKey, setFormResetKey] = useState(0);
 
     const {
         loading,
@@ -65,6 +81,7 @@ const AirtimeScreen = () => {
     const longMessage = useSelector((state: RootState) => state.payment.longMessage);
 
     const [mobileNumberState, setMobileNumberState] = useState<string>("");
+    const AcardNumber = useSelector((state: RootState) => state.payment.AcardNumber)
 
     const handlePayment = () => {
         const payload = {
@@ -110,13 +127,88 @@ const AirtimeScreen = () => {
         }, [])
     );
     const handleOkay = () => {
+        clearForm();
         setModalVisible(false);
 
         dispatch(clearPaymentState());
         dispatch(clearOtpState());
+        dispatch(clearOtpState());
+        dispatch(clearPaymentState());
+        dispatch(clearDstvPaymentState());
+        dispatch(cleardstvCatalogPaymentState());
+        dispatch(clearDerashPaymentState());
 
 
     };
+    const clearAllStates = () => {
+
+
+
+    };
+
+    const handleGoHome = () => {
+        handleCancel()
+        navigation.navigate("Home");
+    };
+
+    // Receipt Printing
+    const handlePrintReceipt = () => {
+        setShowReceipt(true);
+    };
+    const handlePrint = async () => {
+        console.log("hello")
+    };
+
+    const handleShare = async () => {
+        try {
+            const result = await Share.share({
+                message: `DSTV Payment Receipt\n
+                    Amount: ${payment.amount}\n
+                    Reference: ${payment.referenceNumber}\n
+                    Date: ${new Date().toLocaleString()}`,
+                title: 'DSTV Payment Receipt'
+            });
+
+            if (result.action === Share.sharedAction) {
+                if (result.activityType) {
+                    console.log('Shared with activity type:', result.activityType);
+                }
+            }
+        } catch (error) {
+            Alert.alert('Share Error', 'Failed to share receipt');
+        }
+    };
+    const handleCancel = () => {
+        clearForm()
+        setShowReceipt(false);
+        setModalVisible(false);
+        dispatch(clearOtpState());
+        dispatch(clearPaymentState())
+
+
+    };
+    const BrCircleIcon = () => (
+        <View style={styles.brCircle}>
+            <Text style={styles.brText}>Br</Text>
+        </View>
+    );
+
+    const clearForm = () => {
+        setMobileNumberState('');
+        dispatch(setMobileNumber(''));
+        setSelectedTopup('PIN');
+
+        setCustomAmount('');
+        setCustomAmount("");
+        setSelectedAmount(25);
+        setSelectedTopup("PIN");
+        setMobileNumberState("");
+        setErrors({});
+        dispatch(clearOtpState())
+        setFormResetKey(prev => prev + 1);
+        // reset other states as needed
+    };
+
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: "#f8f9fa" }}>
@@ -130,17 +222,21 @@ const AirtimeScreen = () => {
                         {/* Phone Number */}
                         <View style={styles.section}>
                             <Text style={styles.label}>Send Minutes To</Text>
-                            <TextInput
-                                style={styles.input}
-                                keyboardType="phone-pad"
-                                placeholder="Mobile Number"
-                                value={mobileNumberState}
-                                onChangeText={(text) => {
-                                    setMobileNumberState(text);
-                                    dispatch(setMobileNumber(text));
-                                }}
-                            />
+                            <View style={styles.inputContainer} >
+                                <FontAwesome5Icon name="mobile-alt" size={18} color="#b0b0b0" style={styles.icon} />
+                                <TextInput
+                                    style={styles.input}
+                                    keyboardType="phone-pad"
+                                    placeholder="Mobile Number"
+                                    value={mobileNumberState}
+                                    onChangeText={(text) => {
+                                        setMobileNumberState(text);
+                                        dispatch(setMobileNumber(text));
+                                    }}
+                                />
+                            </View>
                             {errors.mobileNumber && <Text style={styles.errorText}>{errors.mobileNumber}</Text>}
+
                         </View>
 
                         {/* Topup Type */}
@@ -169,14 +265,15 @@ const AirtimeScreen = () => {
                                     </TouchableOpacity>
                                 ))}
                             </View>
+                            <Text style={styles.topupDescription}>
+                                PIN: Topup prepaid airtime with PIN to be sent to customer mobile phone in text message.
+                            </Text>
                         </View>
 
                         {/* Amount Selection */}
                         {selectedTopup === "PIN" ? (
                             <View style={styles.section}>
-                                <Text style={styles.topupDescription}>
-                                    PIN: Topup prepaid airtime with PIN to be sent to customer mobile phone in text message.
-                                </Text>
+
                                 <Text style={styles.label}>Card Amount</Text>
                                 <View style={styles.amountContainer}>
                                     {amounts.map((amt) => (
@@ -191,15 +288,19 @@ const AirtimeScreen = () => {
                                                 dispatch(setAmount(amt.toString()));
                                             }}
                                         >
-                                            <Text
-                                                style={[
-                                                    styles.amountText,
-                                                    selectedAmount === amt && styles.selectedAmountText
-                                                ]}
-                                            >
-                                                Br {amt}
-                                            </Text>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                <BrCircleIcon />
+                                                <Text
+                                                    style={[
+                                                        styles.amountText,
+                                                        selectedAmount === amt && styles.selectedAmountText
+                                                    ]}
+                                                >
+                                                    {amt}
+                                                </Text>
+                                            </View>
                                         </TouchableOpacity>
+
                                     ))}
                                 </View>
                             </View>
@@ -207,7 +308,7 @@ const AirtimeScreen = () => {
                             <View style={styles.section}>
                                 <Text style={styles.label}>Amount (50 to 1000)</Text>
                                 <TextInput
-                                    style={styles.input}
+                                    style={styles.inputContainer}
                                     placeholder="Enter custom amount"
                                     keyboardType="numeric"
                                     value={customAmount}
@@ -220,92 +321,22 @@ const AirtimeScreen = () => {
                             </View>
                         )}
 
-                        {/* OTP Section */}
 
+                        <DstvModals
+                            showReceipt={showReceipt}
 
-                        {/* Submit Button */}
-
-
-                        {/* Modal */}
-                        <Modal transparent={true} visible={modalVisible}>
-                            <View style={styles.modalOverlay}>
-                                {loading ? (
-                                    <View style={styles.modalContainer}>
-                                        <ActivityIndicator size="large" color="blue" />
-                                        <Text style={{ textAlign: "center", marginTop: 10 }}>
-                                            Processing Payment...
-                                        </Text>
-                                    </View>
-                                ) : shortMessage ? (
-                                    <View style={styles.modalContainer1}>
-                                        <View style={styles.successIconContainer}>
-                                            <Ionicons name="checkmark-circle" size={80} color="white" />
-                                        </View>
-                                        <Text style={styles.amountText1}>{responseAmount}</Text>
-                                        <Text style={styles.successMessageText}>{shortMessage}</Text>
-                                        <Text style={styles.refText}>Ref # {referenceNumber}</Text>
-
-                                        <View style={styles.buttonRow}>
-                                            <TouchableOpacity
-                                                style={styles.actionButton2}
-                                                onPress={() => {
-                                                    resetForm();
-                                                    setModalVisible(false);
-                                                    dispatch(clearOtpState());
-                                                }}
-                                            >
-                                                <Ionicons name="arrow-forward" size={18} color="white" />
-                                                <Text style={styles.actionButtonText}>New Topup</Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                style={styles.actionButton}
-                                                onPress={() => setModalVisible(false)}
-                                            >
-                                                <Ionicons name="home-outline" size={18} color="white" />
-                                                <Text style={styles.actionButtonText}>Home Screen</Text>
-                                            </TouchableOpacity>
-                                        </View>
-
-                                        <TouchableOpacity
-                                            style={styles.printButton}
-                                            onPress={() => setModalVisible(false)}
-                                        >
-                                            <Ionicons name="print-outline" size={18} color="black" />
-                                            <Text style={styles.actionButtonText1}>Print Receipt</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                ) : (
-                                    <View style={styles.modalBackground}>
-                                        <View style={styles.modalContainer2}>
-                                            <View style={styles.iconContainer}>
-                                                <Ionicons name="alert-circle" size={60} color="#e60000" />
-                                            </View>
-
-
-
-                                            {payment.longMessage ? (
-                                                <Text style={{ color: 'green', fontSize: 16, marginTop: 10, textAlign: 'center' }}>
-                                                    {payment.longMessage}
-                                                </Text>
-                                            ) : (
-                                                <Text style={styles.description}>Something went wrong.</Text>
-                                            )}
-
-                                            <TouchableOpacity style={styles.tryAgainButton} onPress={handleOkay}>
-                                                <View style={styles.row}>
-                                                    <Text style={styles.buttonText}>Try Again</Text>
-                                                    <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 200 }} />
-                                                </View>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-
-                                )}
-                            </View>
-                        </Modal>
+                            accountNumber={AcardNumber ?? undefined}
+                            handlePrint={handlePrint}
+                            handleShare={handleShare}
+                            handleCancel={handleCancel}
+                            handleOkay={handleOkay}
+                            handleGoHome={handleGoHome}
+                            handlePrintReceipt={handlePrintReceipt}
+                            isPin={isPin}
+                        />
 
                     </View>
-                    <View >
+                    <View key={formResetKey}>
                         <OTP />
                     </View>
                     <TouchableOpacity style={styles.submitButton} onPress={handlePayment}>
@@ -323,13 +354,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#f8f9fa", elevation: 3, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, borderRadius: 10, marginTop: 15 },
     section: { padding: 15 },
     label: { fontSize: 14, fontWeight: "bold", color: "#333", marginBottom: 5 },
-    input: {
-        backgroundColor: "#e0e0e0",
-        borderRadius: 8,
-        padding: 10,
-        fontSize: 16,
-        color: "#666"
-    },
+    input: { flex: 1, fontSize: 14, color: "#333" },
     topupContainer: { flexDirection: "row", justifyContent: "flex-start" },
     topupOption: {
         flexDirection: "row",
@@ -345,6 +370,7 @@ const styles = StyleSheet.create({
         borderColor: "#015CB7",
         marginRight: 8
     },
+    icon: { marginRight: 10 },
     selectedRadioCircle: { backgroundColor: "#2ecc71" },
     topupText: { fontSize: 16, fontWeight: "bold", color: "#015CB7" },
     topupDescription: { fontSize: 12, color: "#555", marginTop: 5 },
@@ -375,16 +401,19 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginVertical: 20,
         marginHorizontal: 15,
-        elevation: 3,
+        elevation: 4,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
         minHeight: 50,
+        width: "92.4%",
+
 
 
 
     },
+    errorText: { color: "red", fontSize: 13, marginTop: -3, marginBottom: 10 },
     submitText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
     modalOverlay: {
         flex: 1,
@@ -588,6 +617,31 @@ const styles = StyleSheet.create({
         borderBottomColor: '#0066cc',
         marginLeft: 5
     },
+    inputContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#f0f0f0",
+        paddingHorizontal: 10,
+        borderRadius: 8,
+        height: 45,
+        marginBottom: 10,
+
+    },
+    brCircle: {
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        backgroundColor: '#d3d3d3',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 6,
+    },
+    brText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#fff',
+    },
+
 });
 
 

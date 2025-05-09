@@ -119,6 +119,8 @@ const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
         backgroundColor: "#ffffff",
+        elevation: 4,
+        borderRadius: 10,
     },
     scrollContainer: {
         padding: 20,
